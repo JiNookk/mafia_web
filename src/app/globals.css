@@ -97,6 +97,11 @@ body {
     --tw-ring-color: rgb(220 38 38 / 0.2);
   }
 
+  .input-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .btn-primary {
     width: 100%;
     height: 3rem;
@@ -139,12 +144,17 @@ body {
     box-shadow: 0 0 20px rgba(220, 38, 38, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5);
   }
 
-  .btn-gradient:hover {
+  .btn-gradient:hover:not(:disabled) {
     transform: scale(1.02);
   }
 
-  .btn-gradient:active {
+  .btn-gradient:active:not(:disabled) {
     transform: scale(0.98);
+  }
+
+  .btn-gradient:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 

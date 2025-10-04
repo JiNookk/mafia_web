@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { authService } from '@/services/auth';
 
 export default function EntryPage() {
   const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!nickname.trim()) {
       toast.error('닉네임을 입력해주세요');
       return;
@@ -19,8 +21,28 @@ export default function EntryPage() {
       toast.error('닉네임은 최대 10자까지 가능합니다');
       return;
     }
-    localStorage.setItem('mafia_nickname', nickname);
-    router.push('/lobby');
+
+    setIsLoading(true);
+
+    try {
+      const response = await authService.signup(nickname);
+
+      if (response.success && response.data) {
+        // 세션 정보를 로컬스토리지에 저장
+        localStorage.setItem('mafia_session_id', response.data.sessionId);
+        localStorage.setItem('mafia_nickname', response.data.nickname);
+
+        toast.success(`환영합니다, ${response.data.nickname}님!`);
+        router.push('/lobby');
+      } else {
+        toast.error(response.error || '회원가입에 실패했습니다');
+      }
+    } catch (error) {
+      toast.error('네트워크 오류가 발생했습니다');
+      console.error('Signup error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,16 +70,18 @@ export default function EntryPage() {
               maxLength={10}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleStart()}
+              onKeyPress={(e) => e.key === 'Enter' && !isLoading && handleStart()}
+              disabled={isLoading}
               className="input-primary text-base"
             />
           </div>
 
           <Button
             onClick={handleStart}
+            disabled={isLoading}
             className="btn-gradient text-base"
           >
-            게임 시작
+            {isLoading ? '로딩 중...' : '게임 시작'}
           </Button>
         </div>
 
