@@ -49,13 +49,13 @@ export default function EntryPage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleStart()}
-              className="h-12 text-base bg-background border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              className="input-primary text-base"
             />
           </div>
 
           <Button
             onClick={handleStart}
-            className="w-full h-12 text-base font-bold gradient-primary shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-wide"
+            className="btn-gradient text-base"
           >
             게임 시작
           </Button>
