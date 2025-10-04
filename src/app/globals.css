@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --primary: #dc2626;
+  --primary-glow: rgba(220, 38, 38, 0.4);
+  --secondary: #fbbf24;
+  --card: #1a1a1a;
+  --card-border: #2a2a2a;
+  --border: #404040;
+  --muted-foreground: #a3a3a3;
+  --accent: #991b1b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 모바일 중심 컨테이너 */
+.mobile-container {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 그라디언트 */
+.gradient-primary {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at 20% 50%, rgba(220, 38, 38, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.1) 0%, transparent 50%),
+              #0a0a0a;
+}
+
+/* 네온 효과 */
+.neon-border {
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow),
+              inset 0 0 10px rgba(220, 38, 38, 0.1);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px var(--primary-glow),
+               0 0 20px var(--primary-glow),
+               0 0 30px var(--primary-glow);
+}
+
+/* 카드 스타일 */
+.card-mafia {
+  background: linear-gradient(145deg, #1a1a1a 0%, #141414 100%);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* 애니메이션 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--primary-glow);
+  }
+  50% {
+    box-shadow: 0 0 30px var(--primary-glow),
+                0 0 40px var(--primary-glow);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px var(--primary-glow),
+              0 4px 12px rgba(0, 0, 0, 0.5);
 }
