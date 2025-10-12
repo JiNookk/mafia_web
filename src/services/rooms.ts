@@ -1,10 +1,14 @@
 import { apiClient, ApiResponse } from "@/lib/api";
 import { OffsetPagination } from "@/types/pagination.type";
-import { RoomSummary } from "@/types/room.type";
+import { RoomSummary, CreateRoomDto, RoomDetailResponse } from "@/types/room.type";
 
 export class RoomsService {
   async getLists(): Promise<ApiResponse<OffsetPagination<RoomSummary>>> {
     return apiClient.get<OffsetPagination<RoomSummary>>("/rooms");
+  }
+
+  async createRoom(data: CreateRoomDto): Promise<ApiResponse<RoomDetailResponse>> {
+    return apiClient.post<RoomDetailResponse>("/rooms", data);
   }
 }
 

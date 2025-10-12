@@ -10,12 +10,27 @@ export interface SignupResponse {
   createdAt: string;
 }
 
+export interface SessionRequestDto {
+  sessionId: string;
+}
+
 export class AuthService {
   /**
    * 회원가입 (세션 등록)
    */
   async signup(nickname: string): Promise<ApiResponse<SignupResponse>> {
     return apiClient.post<SignupResponse>("/auth/signup", { nickname });
+  }
+
+  /**
+   * 현재 세션 확인 (POST /auth/current)
+   */
+  async checkCurrent(): Promise<ApiResponse<void>> {
+    const sessionId = localStorage.getItem('mafia_session_id');
+    if (!sessionId) {
+      return { success: false, error: 'No session found' };
+    }
+    return apiClient.post<void>("/auth/current", { sessionId });
   }
 
   /**
