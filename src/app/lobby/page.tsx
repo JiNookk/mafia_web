@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Plus, Settings } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,15 +39,38 @@ export default function LobbyPage() {
     }
   };
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!newRoomTitle.trim()) {
       toast.error('방 제목을 입력해주세요');
       return;
     }
-    // TODO: API 연동 필요
-    toast.success('방 생성 API 연동 예정');
-    setNewRoomTitle('');
-    setOpen(false);
+
+    const username = localStorage.getItem('mafia_nickname');
+    if (!username) {
+      toast.error('닉네임 정보가 없습니다');
+      router.push('/entry');
+      return;
+    }
+
+    try {
+      const response = await roomsService.createRoom({
+        username,
+        roomName: newRoomTitle,
+      });
+
+      if (response.success && response.data) {
+        toast.success('방이 생성되었습니다');
+        router.push(`/rooms/${response.data.id}`);
+      } else {
+        toast.error(response.error || '방 생성에 실패했습니다');
+      }
+    } catch (error) {
+      toast.error('네트워크 오류가 발생했습니다');
+      console.error('Create room error:', error);
+    } finally {
+      setNewRoomTitle('');
+      setOpen(false);
+    }
   };
 
   const handleJoinRoom = (room: RoomSummary) => {
@@ -131,47 +153,57 @@ export default function LobbyPage() {
       </div>
 
       {/* 방 만들기 버튼 */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <button
-            onClick={() => setOpen(true)}
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full gradient-primary shadow-glow hover:scale-110 active:scale-95 transition-transform z-10 flex items-center justify-center"
-          >
-            <Plus className="w-6 h-6 text-white" />
-          </button>
-        </DialogTrigger>
-        <DialogContent className="max-w-[340px]">
-          <DialogHeader>
-            <DialogTitle className="text-center text-primary">방 만들기</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <Input
-              placeholder="방 제목 입력"
-              value={newRoomTitle}
-              onChange={(e) => setNewRoomTitle(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
-              className="input-primary text-base"
-            />
-            <p className="text-sm text-muted-foreground text-center">
-              8명이 모이면 게임이 시작됩니다
-            </p>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => setOpen(false)}
-                className="flex-1 h-12 border border-border hover:bg-card/50 transition-colors"
-              >
-                취소
-              </Button>
-              <Button
-                onClick={handleCreateRoom}
-                className="flex-1 btn-gradient text-base"
-              >
-                생성
-              </Button>
+      <div className="p-4">
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full card-mafia rounded-2xl p-4 border-2 border-primary/50 hover:border-primary active:scale-[0.98] transition-all cursor-pointer"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Plus className="w-6 h-6 text-primary" />
+            <span className="font-semibold text-lg text-primary">방 만들기</span>
+          </div>
+        </button>
+      </div>
+
+      {/* 방 만들기 모달 */}
+      {open && (
+        <>
+          <div
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 bg-black/60 z-40 animate-fade-in"
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md z-50 animate-fade-in">
+            <div className="card-mafia rounded-2xl p-6 space-y-4">
+              <h3 className="text-xl font-bold text-center text-primary">방 만들기</h3>
+              <Input
+                placeholder="방 제목 입력"
+                value={newRoomTitle}
+                onChange={(e) => setNewRoomTitle(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateRoom()}
+                className="w-full h-12 bg-background/50 border-border/30"
+                autoFocus
+              />
+              <p className="text-sm text-muted-foreground text-center">
+                8명이 모이면 게임이 시작됩니다
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="flex-1 h-12 rounded-xl bg-background/50 hover:bg-background/70 border border-border/30 transition-colors font-medium"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleCreateRoom}
+                  className="flex-1 h-12 rounded-xl gradient-primary shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-transform font-medium"
+                >
+                  생성
+                </button>
+              </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
     </div>
   );
 }
