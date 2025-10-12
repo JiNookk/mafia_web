@@ -1,6 +1,6 @@
 import { apiClient, ApiResponse } from "@/lib/api";
 import { OffsetPagination } from "@/types/pagination.type";
-import { RoomSummary, CreateRoomDto, RoomDetailResponse } from "@/types/room.type";
+import { RoomSummary, CreateRoomDto, RoomDetailResponse, ChatMessageDto, SendChatDto, ChatType } from "@/types/room.type";
 
 export class RoomsService {
   async getLists(): Promise<ApiResponse<OffsetPagination<RoomSummary>>> {
@@ -9,6 +9,26 @@ export class RoomsService {
 
   async createRoom(data: CreateRoomDto): Promise<ApiResponse<RoomDetailResponse>> {
     return apiClient.post<RoomDetailResponse>("/rooms", data);
+  }
+
+  async joinRoom(roomId: string, username: string): Promise<ApiResponse<RoomDetailResponse>> {
+    return apiClient.post<RoomDetailResponse>(`/rooms/${roomId}/join`, { username, roomId });
+  }
+
+  async getRoomDetail(roomId: string): Promise<ApiResponse<RoomDetailResponse>> {
+    return apiClient.get<RoomDetailResponse>(`/rooms/${roomId}`);
+  }
+
+  async leaveRoom(roomId: string, userId: string): Promise<ApiResponse<void>> {
+    return apiClient.post<void>(`/rooms/${roomId}/leave`, { userId });
+  }
+
+  async getChatHistory(roomId: string, userId: string, chatType: ChatType, limit: number = 50): Promise<ApiResponse<ChatMessageDto[]>> {
+    return apiClient.get<ChatMessageDto[]>(`/rooms/${roomId}/chat?userId=${userId}&chatType=${chatType}&limit=${limit}`);
+  }
+
+  async sendChat(roomId: string, data: SendChatDto): Promise<ApiResponse<ChatMessageDto>> {
+    return apiClient.post<ChatMessageDto>(`/rooms/${roomId}/chat`, data);
   }
 }
 

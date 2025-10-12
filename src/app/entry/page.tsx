@@ -29,11 +29,17 @@ export default function EntryPage() {
 
       if (response.success && response.data) {
         // 세션 정보를 로컬스토리지에 저장
-        localStorage.setItem('mafia_session_id', response.data.sessionId);
+        localStorage.setItem('mafia_session_id', response.data.userId);
         localStorage.setItem('mafia_nickname', response.data.nickname);
 
         toast.success(`환영합니다, ${response.data.nickname}님!`);
-        router.push('/lobby');
+
+        // roomId가 있으면 해당 방으로, 없으면 로비로 이동
+        if (response.data.roomId) {
+          router.push(`/rooms/${response.data.roomId}`);
+        } else {
+          router.push('/lobby');
+        }
       } else {
         toast.error(response.error || '회원가입에 실패했습니다');
       }
