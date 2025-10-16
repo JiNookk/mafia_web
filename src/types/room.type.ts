@@ -23,6 +23,7 @@ export interface RoomDetailResponse {
   members: RoomMemberResponse[];
   currentPlayers: number;
   maxPlayers: number;
+  gameId?: number;
 }
 
 export enum ChatType {
