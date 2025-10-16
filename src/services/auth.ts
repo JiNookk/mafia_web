@@ -5,13 +5,19 @@ export interface SignupRequest {
 }
 
 export interface SignupResponse {
-  sessionId: string;
+  userId: string;
   nickname: string;
-  createdAt: string;
+  roomId: string | null;
+}
+
+export interface CurrentSessionResponse {
+  userId: string;
+  nickname: string;
+  roomId: string | null;
 }
 
 export interface SessionRequestDto {
-  sessionId: string;
+  userId: string;
 }
 
 export class AuthService {
@@ -25,12 +31,12 @@ export class AuthService {
   /**
    * 현재 세션 확인 (POST /auth/current)
    */
-  async checkCurrent(): Promise<ApiResponse<void>> {
-    const sessionId = localStorage.getItem('mafia_session_id');
-    if (!sessionId) {
+  async checkCurrent(): Promise<ApiResponse<CurrentSessionResponse>> {
+    const userId = localStorage.getItem('mafia_session_id');
+    if (!userId) {
       return { success: false, error: 'No session found' };
     }
-    return apiClient.post<void>("/auth/current", { sessionId });
+    return apiClient.post<CurrentSessionResponse>("/auth/current", { userId });
   }
 
   /**

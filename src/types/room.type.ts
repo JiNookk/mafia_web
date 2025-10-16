@@ -1,13 +1,9 @@
 export interface RoomSummary {
   id: string;
-
-  title: string;
-
-  players: number;
-
+  name: string;
+  currentPlayers: number;
   maxPlayers: number;
-
-  status: "대기중" | "게임중" | "풀방";
+  status: "AVAILABLE" | "IN_GAME" | "FULL";
 }
 
 export interface CreateRoomDto {
@@ -16,8 +12,9 @@ export interface CreateRoomDto {
 }
 
 export interface RoomMemberResponse {
-  playerId: string;
-  role: ParticipatingRole;
+  userId: string;
+  nickname: string;
+  role: 'HOST' | 'PARTICIPANT';
 }
 
 export interface RoomDetailResponse {
@@ -28,4 +25,24 @@ export interface RoomDetailResponse {
   maxPlayers: number;
 }
 
-export type ParticipatingRole = 'MAFIA' | 'CITIZEN' | 'DOCTOR' | 'POLICE';
+export enum ChatType {
+  ALL = 'ALL',
+  MAFIA = 'MAFIA',
+  DEAD = 'DEAD'
+}
+
+export interface ChatMessageDto {
+  id: number;
+  roomId: string;
+  userId: string;
+  nickname: string;
+  chatType: ChatType;
+  message: string;
+  timestamp: string;
+}
+
+export interface SendChatDto {
+  userId: string;
+  chatType: ChatType;
+  message: string;
+}

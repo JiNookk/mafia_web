@@ -6,6 +6,7 @@ export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+  errorCode?: string;
   message?: string;
 }
 
@@ -50,9 +51,11 @@ class ApiClient {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data;
         return {
           success: false,
-          error: error.response?.data?.message || error.message || 'API 요청에 실패했습니다',
+          error: errorData?.message || error.message || 'API 요청에 실패했습니다',
+          errorCode: errorData?.errorCode,
         };
       }
       return {

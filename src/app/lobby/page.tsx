@@ -8,6 +8,7 @@ import { Plus, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { roomsService } from '@/services/rooms';
 import { RoomSummary } from '@/types/room.type';
+import { authService } from '@/services/auth';
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -16,10 +17,26 @@ export default function LobbyPage() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 방 목록 로드
+  // 세션 확인 및 방 목록 로드
   useEffect(() => {
+    checkCurrentSession();
     loadRooms();
   }, []);
+
+  const checkCurrentSession = async () => {
+    try {
+      const response = await authService.checkCurrent();
+
+      if (response.success && response.data) {
+        // roomId가 있으면 해당 방으로 이동
+        if (response.data.roomId) {
+          router.push(`/rooms/${response.data.roomId}`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check current session:', error);
+    }
+  };
 
   const loadRooms = async () => {
     setIsLoading(true);
@@ -73,16 +90,38 @@ export default function LobbyPage() {
     }
   };
 
-  const handleJoinRoom = (room: RoomSummary) => {
-    if (room.status === '게임중') {
-      toast.error('이미 게임이 진행중인 방입니다');
+  const handleJoinRoom = async (room: RoomSummary) => {
+    const username = localStorage.getItem('mafia_nickname');
+    if (!username) {
+      toast.error('로그인 정보가 없습니다');
+      router.push('/entry');
       return;
     }
-    if (room.status === '풀방') {
-      toast.error('방이 가득 찼습니다');
-      return;
+
+    try {
+      const response = await roomsService.joinRoom(room.id, username);
+
+      if (response.success && response.data) {
+        toast.success('방에 참여했습니다');
+        router.push(`/rooms/${room.id}`);
+      } else {
+        // 백엔드 에러 코드에 따른 처리
+        if (response.errorCode === 'ROOM_FULL') {
+          toast.error('방이 가득 찼습니다');
+        } else if (response.errorCode === 'GAME_ALREADY_STARTED') {
+          toast.error('이미 게임이 진행중인 방입니다');
+        } else {
+          toast.error(response.error || '방 참여에 실패했습니다');
+        }
+        // 에러 발생 시 방 목록 새로고침
+        loadRooms();
+      }
+    } catch (error) {
+      toast.error('네트워크 오류가 발생했습니다');
+      console.error('Join room error:', error);
+      // 에러 발생 시 방 목록 새로고침
+      loadRooms();
     }
-    router.push(`/room/${room.id}`);
   };
 
   return (
@@ -132,19 +171,19 @@ export default function LobbyPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold text-base">{room.title}</span>
+                <span className="font-semibold text-base">{room.name}</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  room.status === '대기중'
+                  room.status === 'AVAILABLE'
                     ? 'bg-secondary/20 text-secondary border border-secondary/30'
-                    : room.status === '게임중'
+                    : room.status === 'IN_GAME'
                     ? 'bg-primary/20 text-primary border border-primary/30'
                     : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/30'
                 }`}>
-                  {room.status}
+                  {room.status === 'AVAILABLE' ? '대기중' : room.status === 'IN_GAME' ? '게임중' : '풀방'}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>👥 {room.players}/{room.maxPlayers}명</span>
+                <span>👥 {room.currentPlayers}/{room.maxPlayers}명</span>
                 <span>일반 게임</span>
               </div>
             </div>
