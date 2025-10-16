@@ -13,7 +13,10 @@ export interface SignupResponse {
 export interface CurrentSessionResponse {
   userId: string;
   nickname: string;
-  roomId: string | null;
+  currentRoom?: {
+    roomId: string;
+    gameId?: string;
+  } | null;
 }
 
 export interface SessionRequestDto {

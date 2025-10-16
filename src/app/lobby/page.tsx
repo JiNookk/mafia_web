@@ -17,26 +17,10 @@ export default function LobbyPage() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 세션 확인 및 방 목록 로드
+  // 방 목록 로드
   useEffect(() => {
-    checkCurrentSession();
     loadRooms();
   }, []);
-
-  const checkCurrentSession = async () => {
-    try {
-      const response = await authService.checkCurrent();
-
-      if (response.success && response.data) {
-        // roomId가 있으면 해당 방으로 이동
-        if (response.data.roomId) {
-          router.push(`/rooms/${response.data.roomId}`);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check current session:', error);
-    }
-  };
 
   const loadRooms = async () => {
     setIsLoading(true);

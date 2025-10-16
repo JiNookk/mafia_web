@@ -330,10 +330,14 @@ export interface components {
         SignupDto: {
             nickname?: string;
         };
+        CurrentRoomDto: {
+            roomId?: string;
+            gameId?: string;
+        };
         SessionResponseDto: {
             userId?: string;
             nickname?: string;
-            roomId?: string;
+            currentRoom?: components["schemas"]["CurrentRoomDto"];
         };
         SessionRequestDto: {
             userId: string;
