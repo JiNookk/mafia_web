@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/{gameId}/chat/{chatType}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChatHistory_1"];
+        put?: never;
+        post: operations["sendChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{gameId}/actions": {
         parameters: {
             query?: never;
@@ -292,17 +308,17 @@ export interface components {
         SendChatDto: {
             userId: string;
             /** @enum {string} */
-            chatType: "ALL" | "MAFIA" | "DEAD";
+            chatType: "WAITING_ROOM" | "GAME_ALL" | "GAME_MAFIA" | "GAME_DEAD";
             message: string;
         };
         ChatMessageDto: {
             /** Format: int64 */
             id?: number;
-            roomId?: string;
+            contextId?: string;
             userId?: string;
             nickname?: string;
             /** @enum {string} */
-            chatType?: "ALL" | "MAFIA" | "DEAD";
+            chatType?: "WAITING_ROOM" | "GAME_ALL" | "GAME_MAFIA" | "GAME_DEAD";
             message?: string;
             /** Format: date-time */
             timestamp?: string;
@@ -533,7 +549,6 @@ export interface operations {
         parameters: {
             query: {
                 userId: string;
-                chatType: "ALL" | "MAFIA" | "DEAD";
                 limit?: number;
             };
             header?: never;
@@ -599,6 +614,59 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["NextPhaseResponse"];
+                };
+            };
+        };
+    };
+    getChatHistory_1: {
+        parameters: {
+            query: {
+                userId: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                gameId: string;
+                chatType: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageDto"][];
+                };
+            };
+        };
+    };
+    sendChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: string;
+                chatType: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendChatDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChatMessageDto"];
                 };
             };
         };

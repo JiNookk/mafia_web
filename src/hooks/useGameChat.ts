@@ -1,9 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { roomsService } from '@/services/rooms';
+import { gameService } from '@/services/game';
 import { ChatMessageDto, ChatType } from '@/types/room.type';
 
-export function useGameChat(roomId: string, myUserId: string) {
+const getChatTypeParam = (chatType: ChatType): string => {
+  switch (chatType) {
+    case ChatType.GAME_ALL:
+      return 'all';
+    case ChatType.GAME_MAFIA:
+      return 'mafia';
+    case ChatType.GAME_DEAD:
+      return 'dead';
+    default:
+      return 'all';
+  }
+};
+
+export function useGameChat(gameId: string, myUserId: string, currentChatType: ChatType) {
   const [messages, setMessages] = useState<ChatMessageDto[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -11,7 +24,10 @@ export function useGameChat(roomId: string, myUserId: string) {
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        const response = await roomsService.getChatHistory(roomId, myUserId, ChatType.ALL);
+        // 현재 채팅 타입의 히스토리만 로드
+        const chatTypeParam = getChatTypeParam(currentChatType);
+        const response = await gameService.getGameChatHistory(gameId, chatTypeParam, myUserId);
+
         if (response.success && response.data) {
           setMessages(response.data);
         }
@@ -21,7 +37,7 @@ export function useGameChat(roomId: string, myUserId: string) {
     };
 
     loadChatHistory();
-  }, [roomId, myUserId]);
+  }, [gameId, myUserId, currentChatType]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -33,9 +49,10 @@ export function useGameChat(roomId: string, myUserId: string) {
     if (!inputMessage.trim()) return;
 
     try {
-      const response = await roomsService.sendChat(roomId, {
+      const chatTypeParam = getChatTypeParam(currentChatType);
+      const response = await gameService.sendGameChat(gameId, chatTypeParam, {
         userId: myUserId,
-        chatType: ChatType.ALL,
+        chatType: currentChatType,
         message: inputMessage.trim()
       });
 

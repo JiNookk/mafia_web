@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { GamePlayerResponse, GamePhase, GameStateResponse } from '@/types/game.type';
+import { GamePlayerResponse, GamePhase, GameStateResponse, GameRole } from '@/types/game.type';
 import { ChatMessageDto } from '@/types/room.type';
 
 interface PhaseChangeData {
@@ -10,7 +10,9 @@ interface PhaseChangeData {
 }
 
 interface UseGameWebSocketProps {
-  roomId: string;
+  gameId: string;
+  myRole: GameRole | null;
+  myIsAlive: boolean;
   gameState: GameStateResponse | null;
   onPhaseChange: (data: PhaseChangeData) => void;
   onPlayerUpdate: (data: GamePlayerResponse) => void;
@@ -47,38 +49,19 @@ const createMessageHandler = (handlers: WebSocketHandlers) => (event: MessageEve
   }
 };
 
-const createCloseHandler = (
-  roomId: string,
-  isManualCloseRef: { current: boolean },
-  reconnectAttemptsRef: React.MutableRefObject<number>,
-  reconnectTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>,
-  connectWebSocket: () => void,
-  maxReconnectAttempts: number
-) => (event: CloseEvent) => {
-  console.log('WebSocket disconnected from game room:', roomId, 'Code:', event.code);
-
-  if (!isManualCloseRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
-    reconnectAttemptsRef.current++;
-    const delay = getReconnectDelay(reconnectAttemptsRef.current);
-    console.log(`Reconnecting in ${delay}ms...`);
-
-    reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
-  } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
-    console.error('Max reconnection attempts reached');
-  }
-};
-
 export function useGameWebSocket({
-  roomId,
+  gameId,
+  myRole,
+  myIsAlive,
   gameState,
   onPhaseChange,
   onPlayerUpdate,
   onChatMessage,
   onVoteUpdate
 }: UseGameWebSocketProps) {
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttemptsRef = useRef(0);
+  const wsRefs = useRef<{ [key: string]: WebSocket }>({});
+  const reconnectTimeoutRefs = useRef<{ [key: string]: NodeJS.Timeout }>({});
+  const reconnectAttemptsRefs = useRef<{ [key: string]: number }>({});
   const maxReconnectAttempts = 5;
 
   const onPhaseChangeRef = useRef(onPhaseChange);
@@ -94,9 +77,20 @@ export function useGameWebSocket({
   }, [onPhaseChange, onPlayerUpdate, onChatMessage, onVoteUpdate]);
 
   useEffect(() => {
+    if (!myRole) return;
+
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws/rooms/${roomId}`;
+    const wsBaseUrl = apiUrl.replace(/^http/, 'ws');
     const isManualCloseRef = { current: false };
+
+    // 연결할 웹소켓 채널 결정
+    const channels: string[] = ['all']; // 모든 플레이어는 게임 상태를 받기 위해 all 채널 필요
+
+    if (!myIsAlive) {
+      channels.push('dead'); // 죽은 플레이어는 dead 채널 추가
+    } else if (myRole === GameRole.MAFIA) {
+      channels.push('mafia'); // 살아있는 마피아는 mafia 채널 추가
+    }
 
     const handlers: WebSocketHandlers = {
       onPhaseChangeRef,
@@ -105,48 +99,70 @@ export function useGameWebSocket({
       onVoteUpdateRef
     };
 
-    const connectWebSocket = () => {
-      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-        console.log('WebSocket already connected or connecting');
+    const connectWebSocket = (channel: string) => {
+      if (wsRefs.current[channel] &&
+          (wsRefs.current[channel].readyState === WebSocket.OPEN ||
+           wsRefs.current[channel].readyState === WebSocket.CONNECTING)) {
+        console.log(`WebSocket [${channel}] already connected or connecting`);
         return;
       }
 
-      console.log(`Attempting to connect WebSocket (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
+      if (!reconnectAttemptsRefs.current[channel]) {
+        reconnectAttemptsRefs.current[channel] = 0;
+      }
 
+      console.log(`Attempting to connect WebSocket [${channel}] (attempt ${reconnectAttemptsRefs.current[channel] + 1}/${maxReconnectAttempts})`);
+
+      const wsUrl = `${wsBaseUrl}/ws/games/${gameId}/${channel}`;
       const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+      wsRefs.current[channel] = ws;
 
       ws.onopen = () => {
-        console.log('WebSocket connected to game room:', roomId);
-        reconnectAttemptsRef.current = 0;
+        console.log(`WebSocket [${channel}] connected to game:`, gameId);
+        reconnectAttemptsRefs.current[channel] = 0;
       };
 
       ws.onmessage = createMessageHandler(handlers);
-      ws.onerror = (error) => console.error('WebSocket error:', error);
-      ws.onclose = createCloseHandler(
-        roomId,
-        isManualCloseRef,
-        reconnectAttemptsRef,
-        reconnectTimeoutRef,
-        connectWebSocket,
-        maxReconnectAttempts
-      );
+      ws.onerror = (error) => console.error(`WebSocket [${channel}] error:`, error);
+      ws.onclose = (event: CloseEvent) => {
+        console.log(`WebSocket [${channel}] disconnected, Code:`, event.code);
+
+        if (!isManualCloseRef.current && reconnectAttemptsRefs.current[channel] < maxReconnectAttempts) {
+          reconnectAttemptsRefs.current[channel]++;
+          const delay = getReconnectDelay(reconnectAttemptsRefs.current[channel]);
+          console.log(`Reconnecting [${channel}] in ${delay}ms...`);
+
+          reconnectTimeoutRefs.current[channel] = setTimeout(() => connectWebSocket(channel), delay);
+        } else if (reconnectAttemptsRefs.current[channel] >= maxReconnectAttempts) {
+          console.error(`Max reconnection attempts reached for [${channel}]`);
+        }
+      };
     };
 
-    connectWebSocket();
+    // 각 채널에 연결
+    channels.forEach(channel => connectWebSocket(channel));
 
     return () => {
       isManualCloseRef.current = true;
 
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      // 모든 재연결 타이머 정리
+      Object.values(reconnectTimeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
 
-      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-        wsRef.current.close();
-      }
+      // 모든 웹소켓 연결 종료
+      Object.values(wsRefs.current).forEach(ws => {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+          ws.close();
+        }
+      });
+
+      // refs 초기화
+      wsRefs.current = {};
+      reconnectTimeoutRefs.current = {};
+      reconnectAttemptsRefs.current = {};
     };
-  }, [roomId]);
+  }, [gameId, myRole, myIsAlive]);
 
-  return wsRef;
+  return wsRefs;
 }

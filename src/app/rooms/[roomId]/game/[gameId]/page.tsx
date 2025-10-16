@@ -15,8 +15,6 @@ import { useModalAction } from '@/hooks/useModalAction';
 import { SimpleGameHeader } from '@/components/game/SimpleGameHeader';
 import { GameChatPanel } from '@/components/game/GameChatPanel';
 import { GameActionBar } from '@/components/game/GameActionBar';
-import { PlayerSelectModal } from '@/components/game/PlayerSelectModal';
-import { PlayerMemoGrid } from '@/components/game/PlayerMemoGrid';
 
 export default function GamePage() {
   const params = useParams();
@@ -25,8 +23,7 @@ export default function GamePage() {
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('mafia_session_id') || '' : '';
 
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [modalType, setModalType] = useState<'vote' | 'ability' | null>(null);
-  const [showMemoGrid, setShowMemoGrid] = useState(false);
+  const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
 
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
@@ -44,13 +41,13 @@ export default function GamePage() {
     }
   });
 
-  const { messages, inputMessage, setInputMessage, chatContainerRef, handleSendMessage: originalSendMessage, addMessage } = useGameChat(roomId, myUserId);
+  const { messages, inputMessage, setInputMessage, chatContainerRef, handleSendMessage: originalSendMessage, addMessage } = useGameChat(gameId, myUserId, currentChatType);
 
   const { executeAction } = useModalAction({
     gameState,
     myRole,
     players,
-    modalType,
+    modalType: expandedMode === 'vote' || expandedMode === 'ability' ? expandedMode : null,
     onActionSuccess: addActionEvent
   });
 
@@ -60,7 +57,9 @@ export default function GamePage() {
   };
 
   useGameWebSocket({
-    roomId,
+    gameId,
+    myRole: myRole?.role || null,
+    myIsAlive: myRole?.isAlive || false,
     gameState,
     onPhaseChange: (data) => {
       setGameState(prev => prev ? { ...prev, ...data } : null);
@@ -97,9 +96,10 @@ export default function GamePage() {
   });
 
   const handlePlayerSelect = (playerId: string) => {
-    if (modalType === 'vote' || modalType === 'ability') {
+    if (expandedMode === 'vote' || expandedMode === 'ability') {
       setSelectedPlayer(playerId);
       executeAction(playerId);
+      setExpandedMode(null);
     }
   };
 
@@ -114,7 +114,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="mobile-container min-h-screen flex flex-col bg-background">
+    <div className="mobile-container min-h-screen flex flex-col gradient-bg">
       <SimpleGameHeader
         dayCount={gameState.dayCount}
         currentPhase={gameState.currentPhase}
@@ -122,24 +122,13 @@ export default function GamePage() {
         myRole={myRole.role}
       />
 
-      {!showMemoGrid && (
-        <GameChatPanel
-          messages={messages}
-          events={events}
-          myUserId={myUserId}
-          chatContainerRef={chatContainerRef}
-        />
-      )}
-
-      {showMemoGrid && (
-        <div className="h-[60vh] overflow-y-auto bg-background/50">
-          <PlayerMemoGrid
-            players={players}
-            getMemo={getMemo}
-            saveMemo={saveMemo}
-          />
-        </div>
-      )}
+      <GameChatPanel
+        messages={messages}
+        events={events}
+        myUserId={myUserId}
+        chatContainerRef={chatContainerRef}
+        isCompact={expandedMode !== null}
+      />
 
       <GameActionBar
         currentPhase={gameState.currentPhase}
@@ -149,20 +138,16 @@ export default function GamePage() {
         currentChatType={currentChatType}
         onInputChange={setInputMessage}
         onSendMessage={handleSendMessage}
-        onOpenVote={() => setModalType('vote')}
-        onOpenMemo={() => setShowMemoGrid(!showMemoGrid)}
-        onOpenAbility={() => setModalType('ability')}
         canChat={canChat}
-      />
-
-      <PlayerSelectModal
+        expandedMode={expandedMode}
+        onOpenVote={() => setExpandedMode('vote')}
+        onOpenMemo={() => setExpandedMode('memo')}
+        onOpenAbility={() => setExpandedMode('ability')}
+        onClose={() => setExpandedMode(null)}
         players={players}
-        isOpen={modalType === 'vote' || modalType === 'ability'}
-        onClose={() => setModalType(null)}
-        onSelect={handlePlayerSelect}
-        title={modalType === 'vote' ? '투표할 플레이어 선택' : '능력 사용 대상 선택'}
-        selectedPlayerId={selectedPlayer}
-        showOnlyAlive={true}
+        onSelectPlayer={handlePlayerSelect}
+        getMemo={getMemo}
+        saveMemo={saveMemo}
       />
     </div>
   );

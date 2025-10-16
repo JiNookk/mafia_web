@@ -9,6 +9,7 @@ interface GameChatPanelProps {
   events: GameEvent[];
   myUserId: string;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
+  isCompact?: boolean;
 }
 
 type CombinedItem =
@@ -19,7 +20,8 @@ export function GameChatPanel({
   messages,
   events,
   myUserId,
-  chatContainerRef
+  chatContainerRef,
+  isCompact = false
 }: GameChatPanelProps) {
   // 이벤트와 메시지를 시간순으로 합치기
   const combinedItems = useMemo<CombinedItem[]>(() => {
@@ -30,7 +32,7 @@ export function GameChatPanel({
   }, [events, messages]);
 
   return (
-    <div className="h-[60vh] flex flex-col bg-background/50">
+    <div className={`flex flex-col transition-all duration-300 ${isCompact ? 'h-[57vh]' : 'flex-1'}`}>
       {/* 채팅 + 이벤트 메시지 영역 */}
       <div
         ref={chatContainerRef}

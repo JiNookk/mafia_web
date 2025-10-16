@@ -7,6 +7,7 @@ import {
   VoteStatusResponse,
   NextPhaseResponse
 } from "@/types/game.type";
+import { ChatMessageDto, SendChatDto } from "@/types/room.type";
 
 export class GameService {
   /**
@@ -63,6 +64,22 @@ export class GameService {
    */
   async nextPhase(gameId: string): Promise<ApiResponse<NextPhaseResponse>> {
     return apiClient.post<NextPhaseResponse>(`/games/${gameId}/next-phase`, {});
+  }
+
+  /**
+   * 게임 채팅 전송
+   * POST /api/games/{gameId}/chat/{chatType}
+   */
+  async sendGameChat(gameId: string, chatType: string, data: SendChatDto): Promise<ApiResponse<ChatMessageDto>> {
+    return apiClient.post<ChatMessageDto>(`/games/${gameId}/chat/${chatType}`, data);
+  }
+
+  /**
+   * 게임 채팅 히스토리 조회
+   * GET /api/games/{gameId}/chat/{chatType}
+   */
+  async getGameChatHistory(gameId: string, chatType: string, userId: string): Promise<ApiResponse<ChatMessageDto[]>> {
+    return apiClient.get<ChatMessageDto[]>(`/games/${gameId}/chat/${chatType}?userId=${userId}`);
   }
 }
 

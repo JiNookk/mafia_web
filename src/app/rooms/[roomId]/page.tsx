@@ -65,7 +65,7 @@ export default function WaitingRoom() {
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        const response = await roomsService.getChatHistory(roomId, myUserId, ChatType.ALL);
+        const response = await roomsService.getChatHistory(roomId, myUserId, ChatType.WAITING_ROOM);
         if (response.success && response.data) {
           setChatMessages(response.data);
         }
@@ -203,14 +203,14 @@ export default function WaitingRoom() {
     console.log('Sending chat message:', {
       roomId,
       userId: myUserId,
-      chatType: ChatType.ALL,
+      chatType: ChatType.WAITING_ROOM,
       message: chatMessage.trim()
     });
 
     try {
       const response = await roomsService.sendChat(roomId, {
         userId: myUserId,
-        chatType: ChatType.ALL,
+        chatType: ChatType.WAITING_ROOM,
         message: chatMessage.trim()
       });
 

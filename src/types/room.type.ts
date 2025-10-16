@@ -27,9 +27,10 @@ export interface RoomDetailResponse {
 }
 
 export enum ChatType {
-  ALL = 'ALL',
-  MAFIA = 'MAFIA',
-  DEAD = 'DEAD'
+  WAITING_ROOM = 'WAITING_ROOM',
+  GAME_ALL = 'GAME_ALL',
+  GAME_MAFIA = 'GAME_MAFIA',
+  GAME_DEAD = 'GAME_DEAD'
 }
 
 export interface ChatMessageDto {

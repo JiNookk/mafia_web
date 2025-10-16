@@ -9,17 +9,17 @@ interface UseChatPermissionProps {
 
 export function useChatPermission({ myRole, currentPhase }: UseChatPermissionProps) {
   const getCurrentChatType = (): ChatType => {
-    if (!myRole) return ChatType.ALL;
+    if (!myRole) return ChatType.GAME_ALL;
 
     if (!myRole.isAlive) {
-      return ChatType.DEAD;
+      return ChatType.GAME_DEAD;
     }
 
     if (currentPhase === GamePhase.NIGHT && myRole.role === GameRole.MAFIA) {
-      return ChatType.MAFIA;
+      return ChatType.GAME_MAFIA;
     }
 
-    return ChatType.ALL;
+    return ChatType.GAME_ALL;
   };
 
   const currentChatType = getCurrentChatType();
@@ -28,16 +28,16 @@ export function useChatPermission({ myRole, currentPhase }: UseChatPermissionPro
     if (!myRole) return false;
 
     // 죽은 사람은 죽은 사람 채팅만
-    if (!myRole.isAlive) return currentChatType === ChatType.DEAD;
+    if (!myRole.isAlive) return currentChatType === ChatType.GAME_DEAD;
 
     // 밤에 마피아는 마피아 채팅
     if (currentPhase === GamePhase.NIGHT && myRole.role === GameRole.MAFIA) {
-      return currentChatType === ChatType.MAFIA;
+      return currentChatType === ChatType.GAME_MAFIA;
     }
 
     // 낮에는 전체 채팅
     if (currentPhase === GamePhase.DAY || currentPhase === GamePhase.VOTE) {
-      return currentChatType === ChatType.ALL;
+      return currentChatType === ChatType.GAME_ALL;
     }
 
     return false;
