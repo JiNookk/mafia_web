@@ -119,6 +119,7 @@ export default function GamePage() {
         dayCount={gameState.dayCount}
         currentPhase={gameState.currentPhase}
         timer={timer}
+        myRole={myRole.role}
       />
 
       {!showMemoGrid && (
