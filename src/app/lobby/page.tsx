@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { roomsService } from '@/services/rooms';
 import { RoomSummary } from '@/types/room.type';
@@ -16,6 +16,7 @@ export default function LobbyPage() {
   const [newRoomTitle, setNewRoomTitle] = useState('');
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 방 목록 로드
   useEffect(() => {
@@ -74,6 +75,13 @@ export default function LobbyPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadRooms();
+    setIsRefreshing(false);
+    toast.success('방 목록을 새로고침했습니다');
+  };
+
   const handleJoinRoom = async (room: RoomSummary) => {
     const username = localStorage.getItem('mafia_nickname');
     if (!username) {
@@ -113,9 +121,18 @@ export default function LobbyPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h1 className="text-2xl font-bold text-primary">방 목록</h1>
-        <button className="p-2 hover:bg-card/50 rounded-lg transition-colors">
-          <Settings className="w-6 h-6 text-primary" />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 hover:bg-card/50 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-6 h-6 text-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button className="p-2 hover:bg-card/50 rounded-lg transition-colors">
+            <Settings className="w-6 h-6 text-primary" />
+          </button>
+        </div>
       </div>
 
       {/* 방 목록 */}
