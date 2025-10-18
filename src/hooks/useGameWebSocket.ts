@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { GamePlayerResponse, GamePhase, GameStateResponse, GameRole } from '@/types/game.type';
+import { GamePlayerResponse, GamePhase, GameStateResponse, GameRole, PhaseResult } from '@/types/game.type';
 import { ChatMessageDto } from '@/types/room.type';
 
 interface PhaseChangeData {
@@ -7,6 +7,7 @@ interface PhaseChangeData {
   dayCount: number;
   phaseStartTime: string;
   phaseDurationSeconds: number;
+  lastPhaseResult?: PhaseResult;
 }
 
 interface UseGameWebSocketProps {

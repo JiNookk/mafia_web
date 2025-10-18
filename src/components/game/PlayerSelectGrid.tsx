@@ -8,6 +8,12 @@ interface PlayerSelectGridProps {
 export function PlayerSelectGrid({ players, onSelectPlayer }: PlayerSelectGridProps) {
   const alivePlayers = players.filter(p => p.isAlive === true);
 
+  console.log('👥 PlayerSelectGrid - All players:', players.map(p => ({
+    username: p.username,
+    isAlive: p.isAlive
+  })));
+  console.log('✅ PlayerSelectGrid - Alive players:', alivePlayers.map(p => p.username));
+
   return (
     <div className="grid grid-cols-4 gap-2 p-3">
       {alivePlayers.map((player) => (

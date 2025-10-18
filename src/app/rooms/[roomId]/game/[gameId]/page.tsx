@@ -21,6 +21,7 @@ export default function GamePage() {
   const roomId = params.roomId as string;
   const gameId = params.gameId as string;
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('mafia_session_id') || '' : '';
+  const myNickname = typeof window !== 'undefined' ? localStorage.getItem('mafia_nickname') || '' : '';
 
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
@@ -28,16 +29,52 @@ export default function GamePage() {
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo } = usePlayerMemo(gameId);
-  const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent } = useGameEvents();
+  const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
 
-  const timer = useGameTimer(gameState, () => {
+  const timer = useGameTimer(gameState, async () => {
     if (gameState?.gameId) {
-      gameService.getGameState(gameState.gameId).then(res => {
-        if (res.success && res.data) {
-          setGameState(res.data);
+      console.log('⏰ Timer ended! Calling next-phase API');
+      try {
+        const response = await gameService.nextPhase(gameState.gameId);
+        if (response.success && response.data) {
+          const phaseData = response.data;
+          console.log('✅ Next phase response:', phaseData);
+
+          // 상태 업데이트 (기존 gameId 유지)
+          setGameState(prev => prev ? {
+            ...prev,
+            currentPhase: phaseData.currentPhase,
+            dayCount: phaseData.dayCount,
+            phaseStartTime: phaseData.phaseStartTime,
+            phaseDurationSeconds: phaseData.phaseDurationSeconds
+          } : null);
+          addPhaseChangeEvent(phaseData.currentPhase as GamePhase, phaseData.dayCount || 0);
+
+          // 페이즈 결과 처리
+          if (phaseData.lastPhaseResult) {
+            if (phaseData.currentPhase === 'DAY') {
+              addNightResultEvent(phaseData.lastPhaseResult.deaths);
+            }
+            if (phaseData.lastPhaseResult.executedUserId && players.length > 0) {
+              const executedPlayer = players.find(p => p.userId === phaseData.lastPhaseResult!.executedUserId);
+              if (executedPlayer) {
+                addVoteResultEvent(executedPlayer.username);
+              }
+            }
+          }
+
+          // 플레이어 정보 다시 로드
+          loadPlayers(gameId);
+
+          // 투표 페이즈면 투표 상태 로드
+          if (phaseData.currentPhase === 'VOTE' && phaseData.dayCount) {
+            loadVoteStatus(gameId, phaseData.dayCount);
+          }
         }
-      });
+      } catch (error) {
+        console.error('❌ Failed to call next-phase:', error);
+      }
     }
   });
 
@@ -62,19 +99,47 @@ export default function GamePage() {
     myIsAlive: myRole?.isAlive || false,
     gameState,
     onPhaseChange: (data) => {
+      console.log('🎯 PHASE_CHANGE received:', {
+        currentPhase: data.currentPhase,
+        dayCount: data.dayCount,
+        lastPhaseResult: data.lastPhaseResult
+      });
+
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
 
-      // 페이즈가 변경될 때마다 플레이어 정보 다시 로드 (생존 상태 업데이트)
-      if (gameState?.gameId) {
-        loadPlayers(gameState.gameId);
+      // 페이즈 결과 처리
+      if (data.lastPhaseResult) {
+        // 밤 -> 낮: 밤에 죽은 사람 정보
+        if (data.currentPhase === GamePhase.DAY) {
+          addNightResultEvent(data.lastPhaseResult.deaths);
+        }
+
+        // 투표 결과: 처형된 사람 정보
+        if (data.lastPhaseResult.executedUserId && players.length > 0) {
+          const executedPlayer = players.find(p => p.userId === data.lastPhaseResult!.executedUserId);
+          if (executedPlayer) {
+            addVoteResultEvent(executedPlayer.username);
+          }
+        }
       }
 
-      if (data.currentPhase === GamePhase.VOTE && gameState?.gameId && data.dayCount) {
-        loadVoteStatus(gameState.gameId, data.dayCount);
+      // 페이즈가 변경될 때마다 플레이어 정보 다시 로드 (생존 상태 업데이트)
+      if (gameId) {
+        loadPlayers(gameId);
+      }
+
+      if (data.currentPhase === GamePhase.VOTE && gameId && data.dayCount) {
+        loadVoteStatus(gameId, data.dayCount);
       }
     },
     onPlayerUpdate: (data) => {
+      console.log('📡 WebSocket PLAYER_UPDATE received:', {
+        username: data.username,
+        userId: data.userId,
+        isAlive: data.isAlive
+      });
+
       setPlayers(prev => {
         const updated = prev.map(p =>
           p.userId === data.userId ? { ...p, ...data } : p
@@ -84,6 +149,11 @@ export default function GamePage() {
         if (oldPlayer?.isAlive && !data.isAlive && data.username) {
           addDeathEvent(data.username, data.userId!);
         }
+
+        console.log('📋 Players after PLAYER_UPDATE:', updated.map(p => ({
+          username: p.username,
+          isAlive: p.isAlive
+        })));
 
         return updated;
       });
@@ -125,6 +195,7 @@ export default function GamePage() {
         currentPhase={gameState.currentPhase as GamePhase}
         timer={timer}
         myRole={myRole.role as GameRole}
+        myNickname={myNickname}
       />
 
       <GameChatPanel

@@ -40,11 +40,37 @@ export function useGameEvents() {
     });
   }, [addEvent]);
 
+  const addNightResultEvent = useCallback((deaths: string[] | undefined) => {
+    if (!deaths || deaths.length === 0) {
+      // 아무도 죽지 않음 (의사가 막음)
+      addEvent({
+        id: `night-result-${Date.now()}`,
+        type: 'info',
+        message: '어젯밤 아무도 죽지 않았습니다. 의사가 공격을 막은 것 같습니다!',
+        timestamp: new Date().toISOString()
+      });
+    }
+    // deaths가 있을 경우는 PLAYER_UPDATE로 개별 처리됨
+  }, [addEvent]);
+
+  const addVoteResultEvent = useCallback((executedUsername: string | undefined) => {
+    if (executedUsername) {
+      addEvent({
+        id: `vote-result-${Date.now()}`,
+        type: 'death',
+        message: `투표 결과 ${executedUsername}님이 처형되었습니다`,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [addEvent]);
+
   return {
     events,
     addEvent,
     addPhaseChangeEvent,
     addDeathEvent,
-    addActionEvent
+    addActionEvent,
+    addNightResultEvent,
+    addVoteResultEvent
   };
 }

@@ -5,9 +5,10 @@ interface SimpleGameHeaderProps {
   currentPhase: GamePhase;
   timer: number;
   myRole: GameRole;
+  myNickname?: string;
 }
 
-export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole }: SimpleGameHeaderProps) {
+export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole, myNickname }: SimpleGameHeaderProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -76,6 +77,7 @@ export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole }: Simp
         <div className="h-6 w-px bg-border/50" />
         <span className={`text-base font-semibold ${roleInfo.color}`}>
           {roleInfo.icon} {roleInfo.text}
+          {myNickname && <span className="text-muted-foreground ml-1">({myNickname})</span>}
         </span>
       </div>
       <div className="text-2xl font-bold text-destructive">
