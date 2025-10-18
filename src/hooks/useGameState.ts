@@ -23,6 +23,17 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
   const [voteStatus, setVoteStatus] = useState<VoteStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadPlayers = async (gameId: string) => {
+    try {
+      const response = await gameService.getPlayers(gameId);
+      if (response.success && response.data && response.data.players) {
+        setPlayers(response.data.players.map(p => ({ ...p, voteCount: 0 })));
+      }
+    } catch (error) {
+      console.error('Failed to load players:', error);
+    }
+  };
+
   const loadVoteStatus = async (gameId: string, dayCount: number) => {
     try {
       const response = await gameService.getVoteStatus(gameId, dayCount);
@@ -87,6 +98,7 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
     players,
     setPlayers,
     voteStatus,
+    loadPlayers,
     loadVoteStatus,
     isLoading
   };

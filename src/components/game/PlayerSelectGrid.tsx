@@ -6,7 +6,7 @@ interface PlayerSelectGridProps {
 }
 
 export function PlayerSelectGrid({ players, onSelectPlayer }: PlayerSelectGridProps) {
-  const alivePlayers = players.filter(p => p.isAlive);
+  const alivePlayers = players.filter(p => p.isAlive === true);
 
   return (
     <div className="grid grid-cols-4 gap-2 p-3">

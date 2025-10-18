@@ -26,7 +26,7 @@ export default function GamePage() {
   const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
 
   // 커스텀 훅 사용
-  const { gameState, setGameState, myRole, players, setPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
+  const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo } = usePlayerMemo(gameId);
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
@@ -64,6 +64,11 @@ export default function GamePage() {
     onPhaseChange: (data) => {
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
+
+      // 페이즈가 변경될 때마다 플레이어 정보 다시 로드 (생존 상태 업데이트)
+      if (gameState?.gameId) {
+        loadPlayers(gameState.gameId);
+      }
 
       if (data.currentPhase === GamePhase.VOTE && gameState?.gameId && data.dayCount) {
         loadVoteStatus(gameState.gameId, data.dayCount);
