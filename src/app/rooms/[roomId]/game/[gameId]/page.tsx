@@ -189,7 +189,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="mobile-container min-h-screen flex flex-col gradient-bg">
+    <div className="mobile-container h-screen flex flex-col gradient-bg overflow-hidden">
       <SimpleGameHeader
         dayCount={gameState.dayCount || 0}
         currentPhase={gameState.currentPhase as GamePhase}
