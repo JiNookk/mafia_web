@@ -40,7 +40,7 @@ export function useGameEvents() {
     });
   }, [addEvent]);
 
-  const addNightResultEvent = useCallback((deaths: string[] | undefined) => {
+  const addNightResultEvent = useCallback((deaths: string[] | undefined, playerNames?: Map<string, string>) => {
     if (!deaths || deaths.length === 0) {
       // 아무도 죽지 않음 (의사가 막음)
       addEvent({
@@ -49,8 +49,18 @@ export function useGameEvents() {
         message: '어젯밤 아무도 죽지 않았습니다. 의사가 공격을 막은 것 같습니다!',
         timestamp: new Date().toISOString()
       });
+    } else {
+      // 죽은 사람들 표시
+      deaths.forEach(userId => {
+        const username = playerNames?.get(userId) || '알 수 없음';
+        addEvent({
+          id: `night-death-${userId}-${Date.now()}`,
+          type: 'death',
+          message: `어젯밤 ${username}님이 마피아에게 살해당했습니다`,
+          timestamp: new Date().toISOString()
+        });
+      });
     }
-    // deaths가 있을 경우는 PLAYER_UPDATE로 개별 처리됨
   }, [addEvent]);
 
   const addVoteResultEvent = useCallback((executedUsername: string | undefined) => {

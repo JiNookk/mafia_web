@@ -54,7 +54,9 @@ export default function GamePage() {
           // 페이즈 결과 처리
           if (phaseData.lastPhaseResult) {
             if (phaseData.currentPhase === 'DAY') {
-              addNightResultEvent(phaseData.lastPhaseResult.deaths);
+              // 플레이어 이름 맵 생성
+              const playerNameMap = new Map(players.map(p => [p.userId!, p.username!]));
+              addNightResultEvent(phaseData.lastPhaseResult.deaths, playerNameMap);
             }
             if (phaseData.lastPhaseResult.executedUserId && players.length > 0) {
               const executedPlayer = players.find(p => p.userId === phaseData.lastPhaseResult!.executedUserId);
@@ -112,7 +114,8 @@ export default function GamePage() {
       if (data.lastPhaseResult) {
         // 밤 -> 낮: 밤에 죽은 사람 정보
         if (data.currentPhase === GamePhase.DAY) {
-          addNightResultEvent(data.lastPhaseResult.deaths);
+          const playerNameMap = new Map(players.map(p => [p.userId!, p.username!]));
+          addNightResultEvent(data.lastPhaseResult.deaths, playerNameMap);
         }
 
         // 투표 결과: 처형된 사람 정보
