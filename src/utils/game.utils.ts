@@ -2,9 +2,9 @@ import { GameRole, ActionType, GamePhase } from '@/types/game.type';
 
 export function getActionType(role: GameRole, phase: GamePhase): ActionType | null {
   if (phase === GamePhase.NIGHT) {
-    if (role === GameRole.MAFIA) return ActionType.KILL;
-    if (role === GameRole.POLICE) return ActionType.INVESTIGATE;
-    if (role === GameRole.DOCTOR) return ActionType.HEAL;
+    if (role === GameRole.MAFIA) return ActionType.MAFIA_KILL;
+    if (role === GameRole.POLICE) return ActionType.POLICE_CHECK;
+    if (role === GameRole.DOCTOR) return ActionType.DOCTOR_HEAL;
     return null;
   } else if (phase === GamePhase.VOTE) {
     return ActionType.VOTE;

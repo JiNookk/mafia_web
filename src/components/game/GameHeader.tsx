@@ -31,7 +31,7 @@ export function GameHeader({ gameState, timer, players }: GameHeaderProps) {
     }
   };
 
-  const phaseInfo = getPhaseInfo(gameState.currentPhase);
+  const phaseInfo = getPhaseInfo(gameState.currentPhase as GamePhase | undefined);
 
   const topVotedPlayer = gameState.currentPhase === GamePhase.VOTE && players.length > 0
     ? players.reduce((max, p) => p.voteCount > (max?.voteCount || 0) ? p : max, players[0])

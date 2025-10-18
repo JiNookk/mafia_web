@@ -27,8 +27,8 @@ export function GameChatPanel({
   const combinedItems = useMemo<CombinedItem[]>(() => {
     return [
       ...events.map(e => ({ type: 'event' as const, data: e, timestamp: e.timestamp })),
-      ...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timestamp }))
-    ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      ...messages.map(m => ({ type: 'message' as const, data: m, timestamp: m.timestamp || '' }))
+    ].sort((a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime());
   }, [events, messages]);
 
   return (

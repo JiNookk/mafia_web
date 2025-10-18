@@ -19,6 +19,7 @@ export function useGameTimer(gameState: GameStateResponse | null, onTimerEnd?: (
     hasCalledTimerEndRef.current = false;
 
     const calculateRemainingTime = () => {
+      if (!gameState.phaseStartTime || !gameState.phaseDurationSeconds) return 0;
       const startTime = new Date(gameState.phaseStartTime).getTime();
       const now = Date.now();
       const elapsed = Math.floor((now - startTime) / 1000);

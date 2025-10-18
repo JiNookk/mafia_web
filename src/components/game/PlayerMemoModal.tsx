@@ -55,7 +55,7 @@ export function PlayerMemoModal({
         <div className="space-y-3 overflow-y-auto flex-1">
           {players.map((player) => {
             const isEditing = editingPlayerId === player.userId;
-            const memo = getMemo(player.userId);
+            const memo = getMemo(player.userId!);
 
             return (
               <div
@@ -85,7 +85,7 @@ export function PlayerMemoModal({
                     />
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => handleSave(player.userId)}
+                        onClick={() => handleSave(player.userId!)}
                         className="flex-1 h-8 text-xs"
                       >
                         저장
@@ -100,7 +100,7 @@ export function PlayerMemoModal({
                   </div>
                 ) : (
                   <div
-                    onClick={() => handleStartEdit(player.userId)}
+                    onClick={() => handleStartEdit(player.userId!)}
                     className="cursor-pointer hover:bg-muted/30 rounded p-2 min-h-[32px] transition-colors"
                   >
                     {memo ? (

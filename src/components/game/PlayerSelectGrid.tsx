@@ -13,7 +13,7 @@ export function PlayerSelectGrid({ players, onSelectPlayer }: PlayerSelectGridPr
       {alivePlayers.map((player) => (
         <button
           key={player.userId}
-          onClick={() => onSelectPlayer(player.userId)}
+          onClick={() => onSelectPlayer(player.userId!)}
           className="relative rounded-xl p-2 text-center transition-all bg-card/50 hover:bg-card/70 active:scale-[0.98] border border-border/30"
         >
           {/* 플레이어 번호 (오른쪽 상단) */}

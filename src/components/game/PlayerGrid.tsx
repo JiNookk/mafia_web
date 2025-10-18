@@ -21,7 +21,7 @@ export function PlayerGrid({
       {players.map((player, index) => (
         <div
           key={player.userId}
-          onClick={() => onPlayerClick(player.userId, player.isAlive)}
+          onClick={() => onPlayerClick(player.userId!, player.isAlive!)}
           className={`
             bg-card/50 rounded-xl p-3 text-center transition-all cursor-pointer relative
             ${selectedPlayer === player.userId ? 'bg-primary/30 border-2 border-primary' : ''}

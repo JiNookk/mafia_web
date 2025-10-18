@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { gameService } from '@/services/game';
-import { GamePhase } from '@/types/game.type';
+import { GamePhase, GameRole } from '@/types/game.type';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
 import { useGameTimer } from '@/hooks/useGameTimer';
@@ -29,7 +29,7 @@ export default function GamePage() {
   const { gameState, setGameState, myRole, players, setPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo } = usePlayerMemo(gameId);
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent } = useGameEvents();
-  const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase });
+  const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
 
   const timer = useGameTimer(gameState, () => {
     if (gameState?.gameId) {
@@ -58,14 +58,14 @@ export default function GamePage() {
 
   useGameWebSocket({
     gameId,
-    myRole: myRole?.role || null,
+    myRole: (myRole?.role as GameRole) || null,
     myIsAlive: myRole?.isAlive || false,
     gameState,
     onPhaseChange: (data) => {
       setGameState(prev => prev ? { ...prev, ...data } : null);
-      addPhaseChangeEvent(data.currentPhase, data.dayCount);
+      addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
 
-      if (data.currentPhase === GamePhase.VOTE && gameState?.gameId) {
+      if (data.currentPhase === GamePhase.VOTE && gameState?.gameId && data.dayCount) {
         loadVoteStatus(gameState.gameId, data.dayCount);
       }
     },
@@ -76,8 +76,8 @@ export default function GamePage() {
         );
 
         const oldPlayer = prev.find(p => p.userId === data.userId);
-        if (oldPlayer?.isAlive && !data.isAlive) {
-          addDeathEvent(data.username, data.userId);
+        if (oldPlayer?.isAlive && !data.isAlive && data.username) {
+          addDeathEvent(data.username, data.userId!);
         }
 
         return updated;
@@ -89,7 +89,7 @@ export default function GamePage() {
     },
     onChatMessage: addMessage,
     onVoteUpdate: () => {
-      if (gameState?.gameId) {
+      if (gameState?.gameId && gameState.dayCount) {
         loadVoteStatus(gameState.gameId, gameState.dayCount);
       }
     }
@@ -116,10 +116,10 @@ export default function GamePage() {
   return (
     <div className="mobile-container min-h-screen flex flex-col gradient-bg">
       <SimpleGameHeader
-        dayCount={gameState.dayCount}
-        currentPhase={gameState.currentPhase}
+        dayCount={gameState.dayCount || 0}
+        currentPhase={gameState.currentPhase as GamePhase}
         timer={timer}
-        myRole={myRole.role}
+        myRole={myRole.role as GameRole}
       />
 
       <GameChatPanel
@@ -131,9 +131,9 @@ export default function GamePage() {
       />
 
       <GameActionBar
-        currentPhase={gameState.currentPhase}
-        myRole={myRole.role}
-        myIsAlive={myRole.isAlive}
+        currentPhase={gameState.currentPhase as GamePhase}
+        myRole={myRole.role as GameRole}
+        myIsAlive={myRole.isAlive || false}
         inputMessage={inputMessage}
         currentChatType={currentChatType}
         onInputChange={setInputMessage}

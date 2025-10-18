@@ -47,7 +47,7 @@ export function PlayerSelectModal({
           {filteredPlayers.map((player) => (
             <button
               key={player.userId}
-              onClick={() => handleSelect(player.userId)}
+              onClick={() => handleSelect(player.userId!)}
               className={`
                 relative rounded-xl p-3 text-center transition-all
                 ${selectedPlayerId === player.userId

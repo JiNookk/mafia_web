@@ -17,8 +17,8 @@ export function ChatMessage({ message, isMyMessage }: ChatMessageProps) {
                 {message.nickname}
               </span>
             )}
-            <span className={`text-xs px-2 py-0.5 rounded-full ${getChatTypeColor(message.chatType)}`}>
-              {getChatTypeLabel(message.chatType)}
+            <span className={`text-xs px-2 py-0.5 rounded-full ${getChatTypeColor(message.chatType as ChatType)}`}>
+              {getChatTypeLabel(message.chatType as ChatType)}
             </span>
           </div>
           <div

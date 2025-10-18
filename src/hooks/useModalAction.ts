@@ -25,11 +25,11 @@ export function useModalAction({
     if (modalType === 'ability' && myRole) {
       switch (myRole.role) {
         case GameRole.MAFIA:
-          return ActionType.KILL;
+          return ActionType.MAFIA_KILL;
         case GameRole.DOCTOR:
-          return ActionType.HEAL;
+          return ActionType.DOCTOR_HEAL;
         case GameRole.POLICE:
-          return ActionType.INVESTIGATE;
+          return ActionType.POLICE_CHECK;
         default:
           return null;
       }
@@ -62,16 +62,18 @@ export function useModalAction({
     if (!actionType) return;
 
     try {
-      const response = await gameService.registerAction(gameState.gameId, {
+      const actorUserId = localStorage.getItem('mafia_session_id') || '';
+      const response = await gameService.registerAction(gameState.gameId!, {
         type: actionType,
-        targetUserId: playerId
+        targetUserId: playerId,
+        actorUserId
       });
 
       if (response.success) {
         const player = players.find(p => p.userId === playerId);
         const actionText = getActionText(modalType);
 
-        if (player) {
+        if (player && player.username) {
           onActionSuccess(player.username, actionText);
         }
       }

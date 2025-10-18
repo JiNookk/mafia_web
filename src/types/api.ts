@@ -292,7 +292,8 @@ export interface components {
         };
         GameStateResponse: {
             gameId?: string;
-            currentPhase?: string;
+            /** @enum {string} */
+            currentPhase?: "NIGHT" | "DAY" | "VOTE" | "DEFENSE" | "RESULT";
             /** Format: int32 */
             dayCount?: number;
             /** Format: date-time */
@@ -301,7 +302,8 @@ export interface components {
             phaseDurationSeconds?: number;
             /** Format: int64 */
             remainingSeconds?: number;
-            winnerTeam?: string;
+            /** @enum {string} */
+            winnerTeam?: "MAFIA" | "CITIZEN" | "DRAW";
             /** Format: date-time */
             finishedAt?: string;
         };
@@ -324,7 +326,8 @@ export interface components {
             timestamp?: string;
         };
         NextPhaseResponse: {
-            currentPhase?: string;
+            /** @enum {string} */
+            currentPhase?: "NIGHT" | "DAY" | "VOTE" | "DEFENSE" | "RESULT";
             /** Format: int32 */
             dayCount?: number;
             /** Format: date-time */
@@ -336,10 +339,12 @@ export interface components {
         PhaseResult: {
             deaths?: string[];
             executedUserId?: string;
-            winnerTeam?: string;
+            /** @enum {string} */
+            winnerTeam?: "MAFIA" | "CITIZEN" | "DRAW";
         };
         RegisterActionDto: {
-            type: string;
+            /** @enum {string} */
+            type: "VOTE" | "MAFIA_KILL" | "DOCTOR_HEAL" | "POLICE_CHECK";
             targetUserId: string;
             actorUserId?: string;
         };
@@ -413,7 +418,8 @@ export interface components {
             players?: components["schemas"]["GamePlayerResponse"][];
         };
         MyRoleResponse: {
-            role?: string;
+            /** @enum {string} */
+            role?: "MAFIA" | "DOCTOR" | "POLICE" | "CITIZEN";
             isAlive?: boolean;
             /** Format: int32 */
             position?: number;

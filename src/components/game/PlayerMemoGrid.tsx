@@ -34,13 +34,13 @@ export function PlayerMemoGrid({ players, getMemo, saveMemo }: PlayerMemoGridPro
     <>
       <div className="grid grid-cols-4 gap-2 p-3">
         {players.map((player) => {
-          const memo = getMemo(player.userId);
+          const memo = getMemo(player.userId!);
           const isEditing = editingPlayerId === player.userId;
 
           return (
             <div
               key={player.userId}
-              onClick={() => !isEditing && handleCardClick(player.userId)}
+              onClick={() => !isEditing && handleCardClick(player.userId!)}
               className={`
                 relative rounded-xl p-2 text-center transition-all border
                 ${isEditing ? 'bg-primary/30 border-2 border-primary' : 'bg-card/50 hover:bg-card/70 border-border/30'}

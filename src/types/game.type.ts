@@ -1,3 +1,17 @@
+import { components } from './api';
+
+// API 스펙에서 타입 가져오기
+export type GameStateResponse = components['schemas']['GameStateResponse'];
+export type MyRoleResponse = components['schemas']['MyRoleResponse'];
+export type GamePlayerResponse = components['schemas']['GamePlayerResponse'];
+export type GamePlayersResponse = components['schemas']['GamePlayersResponse'];
+export type RegisterActionDto = components['schemas']['RegisterActionDto'];
+export type VoteInfo = components['schemas']['VoteInfo'];
+export type VoteStatusResponse = components['schemas']['VoteStatusResponse'];
+export type PhaseResult = components['schemas']['PhaseResult'];
+export type NextPhaseResponse = components['schemas']['NextPhaseResponse'];
+
+// Enum 타입들 (API 스펙의 값과 일치)
 export enum GamePhase {
   NIGHT = 'NIGHT',
   DAY = 'DAY',
@@ -15,66 +29,7 @@ export enum GameRole {
 
 export enum ActionType {
   VOTE = 'VOTE',
-  KILL = 'KILL',
-  HEAL = 'HEAL',
-  INVESTIGATE = 'INVESTIGATE'
-}
-
-export interface GameStateResponse {
-  gameId: string;
-  currentPhase: GamePhase;
-  dayCount: number;
-  phaseStartTime: string;
-  phaseDurationSeconds: number;
-  remainingSeconds: number;
-  winnerTeam?: string;
-  finishedAt?: string;
-}
-
-export interface MyRoleResponse {
-  role: GameRole;
-  isAlive: boolean;
-  position: number;
-}
-
-export interface GamePlayerResponse {
-  userId: string;
-  username: string;
-  position: number;
-  isAlive: boolean;
-  diedAt?: string;
-}
-
-export interface GamePlayersResponse {
-  players: GamePlayerResponse[];
-}
-
-export interface RegisterActionDto {
-  type: ActionType;
-  targetUserId: string;
-  actorUserId?: string;
-}
-
-export interface VoteInfo {
-  voterUserId: string;
-  targetUserId: string;
-}
-
-export interface VoteStatusResponse {
-  votes: VoteInfo[];
-  voteCount: Record<string, number>;
-}
-
-export interface PhaseResult {
-  deaths?: string[];
-  executedUserId?: string;
-  winnerTeam?: string;
-}
-
-export interface NextPhaseResponse {
-  currentPhase: GamePhase;
-  dayCount: number;
-  phaseStartTime: string;
-  phaseDurationSeconds: number;
-  lastPhaseResult?: PhaseResult;
+  MAFIA_KILL = 'MAFIA_KILL',
+  DOCTOR_HEAL = 'DOCTOR_HEAL',
+  POLICE_CHECK = 'POLICE_CHECK'
 }

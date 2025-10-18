@@ -30,7 +30,7 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
         setVoteStatus(response.data);
         setPlayers(prev => prev.map(p => ({
           ...p,
-          voteCount: response.data?.voteCount[p.userId] || 0
+          voteCount: response.data?.voteCount?.[p.userId!] || 0
         })));
       }
     } catch (error) {
@@ -61,11 +61,11 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
           setMyRole(roleRes.data);
         }
 
-        if (playersRes.success && playersRes.data) {
+        if (playersRes.success && playersRes.data && playersRes.data.players) {
           setPlayers(playersRes.data.players.map(p => ({ ...p, voteCount: 0 })));
         }
 
-        if (stateRes.data?.currentPhase === GamePhase.VOTE) {
+        if (stateRes.data?.currentPhase === GamePhase.VOTE && stateRes.data.dayCount) {
           loadVoteStatus(gameId, stateRes.data.dayCount);
         }
 

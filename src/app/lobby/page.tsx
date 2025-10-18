@@ -91,7 +91,7 @@ export default function LobbyPage() {
     }
 
     try {
-      const response = await roomsService.joinRoom(room.id, username);
+      const response = await roomsService.joinRoom(room.id!, username);
 
       if (response.success && response.data) {
         toast.success('방에 참여했습니다');
@@ -176,11 +176,11 @@ export default function LobbyPage() {
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   room.status === 'AVAILABLE'
                     ? 'bg-secondary/20 text-secondary border border-secondary/30'
-                    : room.status === 'IN_GAME'
+                    : room.status === 'STARTED'
                     ? 'bg-primary/20 text-primary border border-primary/30'
                     : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/30'
                 }`}>
-                  {room.status === 'AVAILABLE' ? '대기중' : room.status === 'IN_GAME' ? '게임중' : '풀방'}
+                  {room.status === 'AVAILABLE' ? '대기중' : room.status === 'STARTED' ? '게임중' : '풀방'}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">

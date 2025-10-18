@@ -39,9 +39,9 @@ export function useGameAction({
   };
 
   const getValidatedActionType = () => {
-    if (!gameState || !myRole) return null;
+    if (!gameState || !myRole || !myRole.role || !gameState.currentPhase) return null;
 
-    const actionType = getActionType(myRole.role, gameState.currentPhase);
+    const actionType = getActionType(myRole.role as GameRole, gameState.currentPhase as GamePhase);
 
     if (!actionType) {
       toast.info('지금은 행동할 수 없습니다');
@@ -63,13 +63,15 @@ export function useGameAction({
     if (!player) return;
 
     try {
-      const response = await gameService.registerAction(gameState.gameId, {
+      const actorUserId = localStorage.getItem('mafia_session_id') || '';
+      const response = await gameService.registerAction(gameState.gameId!, {
         type: actionType,
-        targetUserId: selectedPlayer
+        targetUserId: selectedPlayer,
+        actorUserId
       });
 
       if (response.success) {
-        const successMessage = getActionSuccessMessage(myRole.role, gameState.currentPhase, player.username);
+        const successMessage = getActionSuccessMessage(myRole.role as GameRole, gameState.currentPhase as GamePhase, player.username!);
         toast.success(successMessage);
         onActionComplete();
       } else {
