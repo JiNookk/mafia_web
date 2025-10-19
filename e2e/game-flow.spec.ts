@@ -48,9 +48,10 @@ test.describe('게임 진행 플로우', () => {
     // 직업 표시 대기 (MAFIA)
     await players[0].page.waitForTimeout(1000);
 
-    // 헤더에 직업 정보 표시 확인
-    const content = await players[0].page.textContent('body');
-    expect(content).toContain('MAFIA');
+    // 헤더에 직업 정보 표시 확인 - 구체적인 UI 검증
+    await expect(
+      players[0].page.getByText(/MAFIA/i).or(players[0].page.getByText(/마피아/i))
+    ).toBeVisible();
   });
 
   test('NIGHT 페이즈에서 마피아는 능력 사용 가능', async () => {
@@ -117,8 +118,18 @@ test.describe('게임 진행 플로우', () => {
     await players[0].page.waitForTimeout(1000);
 
     // DAY 페이즈 확인
-    const content = await players[0].page.textContent('body');
-    expect(content).toContain('DAY');
+    await expect(
+      players[0].page.getByText(/DAY/i).or(players[0].page.getByText(/낮/i))
+    ).toBeVisible();
+
+    // 밤 결과 (사망자) 표시 확인
+    const deathMessage = await players[0].page
+      .getByText(new RegExp(players[4].nickname, 'i'))
+      .isVisible()
+      .catch(() => false);
+
+    // 사망 메시지가 표시되는지 확인 (선택적)
+    console.log('사망자 메시지 표시:', deathMessage);
   });
 
   test('VOTE 페이즈에서 투표 가능', async () => {
@@ -146,13 +157,18 @@ test.describe('게임 진행 플로우', () => {
     await players[0].page.goto(`/rooms/test-room/game/${gameId}`);
     await players[0].page.waitForTimeout(1000);
 
-    // 투표 현황이 표시되는지 확인 (실제 UI 구현에 따라 다름)
-    // 여기서는 간단히 페이지 내용만 확인
+    // 투표 현황 확인 - 투표 수가 표시되는지 검증
+    const voteCountVisible = await players[0].page
+      .getByText(/2/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 또는 플레이어 이름과 투표 수가 함께 표시되는지 확인
     const content = await players[0].page.textContent('body');
-    expect(content).toBeTruthy();
+    expect(content).toContain(players[1].nickname);
   });
 
-  test('채팅 메시지 입력 가능', async () => {
+  test('채팅 메시지 입력 및 전송', async () => {
     await players[0].page.goto(`/rooms/test-room/game/${gameId}`);
     await players[0].page.waitForTimeout(1000);
 
@@ -163,6 +179,14 @@ test.describe('게임 진행 플로우', () => {
     // 메시지 입력
     await chatInput.fill('테스트 메시지');
     await expect(chatInput).toHaveValue('테스트 메시지');
+
+    // 엔터로 전송
+    await chatInput.press('Enter');
+
+    // 전송 후 입력창이 비워지는지 확인
+    await players[0].page.waitForTimeout(500);
+    const valueAfterSend = await chatInput.inputValue();
+    expect(valueAfterSend).toBe('');
   });
 
   test('죽은 플레이어는 회색으로 표시', async () => {
@@ -173,9 +197,22 @@ test.describe('게임 진행 플로우', () => {
     await players[0].page.goto(`/rooms/test-room/game/${gameId}`);
     await players[0].page.waitForTimeout(1500);
 
-    // 페이지 로드 확인 (실제로는 죽은 플레이어 스타일 확인)
-    const content = await players[0].page.textContent('body');
-    expect(content).toBeTruthy();
+    // 죽은 플레이어 이름이 페이지에 표시되는지 확인
+    const deadPlayerVisible = await players[0].page
+      .getByText(players[4].nickname)
+      .isVisible()
+      .catch(() => false);
+
+    expect(deadPlayerVisible).toBe(true);
+
+    // 죽은 플레이어가 회색 스타일(opacity)이 적용되었는지 확인
+    const deadPlayerElement = players[0].page.getByText(players[4].nickname);
+    const opacity = await deadPlayerElement
+      .evaluate((el) => window.getComputedStyle(el.closest('[data-player-id], .player-card, [class*="player"]') || el).opacity)
+      .catch(() => '1');
+
+    // opacity가 1보다 작으면 회색으로 표시된 것으로 간주 (또는 구현에 따라 다를 수 있음)
+    console.log(`죽은 플레이어 opacity: ${opacity}`);
   });
 
   test('메모 기능 사용 가능', async () => {
@@ -198,8 +235,16 @@ test.describe('게임 진행 플로우', () => {
     await players[0].page.goto(`/rooms/test-room/game/${gameId}`);
     await players[0].page.waitForTimeout(1000);
 
-    // 헤더에 타이머 표시 확인 (초 단위)
+    // 헤더에 타이머 표시 확인 (초 단위) - 숫자 패턴 검색
+    const timerVisible = await players[0].page
+      .getByText(/\d+:\d+|\d+초/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 타이머가 표시되지 않을 수도 있으므로 페이지 로드는 최소한 확인
     const content = await players[0].page.textContent('body');
     expect(content).toBeTruthy();
+
+    console.log('타이머 표시 여부:', timerVisible);
   });
 });

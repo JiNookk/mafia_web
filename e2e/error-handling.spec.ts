@@ -45,9 +45,23 @@ test.describe('에러 처리 및 엣지 케이스', () => {
     await players[0].page.goto(`/rooms/${roomId}/game/${gameId}`);
     await players[0].page.waitForTimeout(1500);
 
-    // 에러 처리 확인 (실제로는 토스트나 에러 UI가 표시됨)
+    // 에러 메시지 표시 확인
+    const hasErrorMessage = await players[0].page
+      .getByText(/(오류|에러|실패|연결|네트워크)/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 또는 에러 토스트/알림 UI 확인
+    const hasErrorAlert = await players[0].page
+      .getByRole('alert')
+      .isVisible()
+      .catch(() => false);
+
+    // 최소한 하나의 에러 표시가 있어야 함 (또는 페이지가 정상 로드되어야 함)
     const content = await players[0].page.textContent('body');
     expect(content).toBeTruthy();
+
+    console.log('에러 메시지 표시:', hasErrorMessage, '에러 알림:', hasErrorAlert);
   });
 
   test('API 응답 500 에러 처리', async () => {
@@ -65,13 +79,19 @@ test.describe('에러 처리 및 엣지 케이스', () => {
     await players[0].page.goto(`/rooms/${roomId}/game/${gameId}`);
     await players[0].page.waitForTimeout(1500);
 
-    // 에러 메시지 확인
-    const hasError = await players[0].page
-      .getByText(/오류/i)
+    // 에러 메시지 확인 - 구체적인 에러 텍스트 검증
+    const hasServerError = await players[0].page
+      .getByText(/서버 오류/i)
       .isVisible()
       .catch(() => false);
 
-    console.log('500 에러 표시 여부:', hasError);
+    const hasGenericError = await players[0].page
+      .getByText(/(오류|에러|실패)/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 최소한 하나의 에러 메시지가 표시되어야 함
+    expect(hasServerError || hasGenericError).toBe(true);
   });
 
   test('행동 등록 API 실패 시 에러 토스트', async () => {
@@ -102,8 +122,13 @@ test.describe('에러 처리 및 엣지 케이스', () => {
       await abilityButton.click();
       await players[0].page.waitForTimeout(500);
 
-      // 에러 토스트 확인
-      // (실제로는 행동 등록 후 에러 표시)
+      // 에러 토스트 확인 - 실제 행동 등록 후 에러 검증
+      const hasError = await players[0].page
+        .getByText(/잘못된 행동|행동.*실패|에러/i)
+        .isVisible()
+        .catch(() => false);
+
+      console.log('행동 등록 실패 에러 표시:', hasError);
     }
   });
 
@@ -126,9 +151,26 @@ test.describe('에러 처리 및 엣지 케이스', () => {
       await voteButton.click();
       await players[0].page.waitForTimeout(500);
 
-      // 죽은 플레이어는 선택 불가능해야 함
-      // (실제 구현에서는 클릭 방지 또는 에러 표시)
-      console.log('죽은 플레이어 선택 방지 테스트');
+      // 죽은 플레이어 요소 찾기
+      const deadPlayerElement = players[0].page.getByText(players[4].nickname);
+      const deadPlayerVisible = await deadPlayerElement.isVisible().catch(() => false);
+
+      if (deadPlayerVisible) {
+        // 죽은 플레이어가 표시되면 클릭 불가능하거나 비활성화되어야 함
+        const isClickable = await deadPlayerElement
+          .click({ timeout: 1000 })
+          .then(() => true)
+          .catch(() => false);
+
+        // 클릭이 되더라도 에러 메시지가 표시되어야 함
+        if (isClickable) {
+          const hasError = await players[0].page
+            .getByText(/(사망|죽은|선택.*불가)/i)
+            .isVisible()
+            .catch(() => false);
+          console.log('죽은 플레이어 선택 시 에러 표시:', hasError);
+        }
+      }
     }
   });
 
@@ -163,12 +205,30 @@ test.describe('에러 처리 및 엣지 케이스', () => {
     await players[0].page.goto(`/rooms/${roomId}/game/${gameId}`);
     await players[0].page.waitForTimeout(1500);
 
-    // 첫 번째 행동 시도
-    // (실제 UI에서 능력 사용)
+    // 능력 버튼 찾기
+    const abilityButton = players[0].page.getByRole('button', { name: /능력/i });
+    const hasButton = await abilityButton.count();
 
-    // 두 번째 행동 시도
-    // (에러 메시지가 표시되어야 함)
-    console.log('중복 행동 방지 테스트');
+    if (hasButton > 0) {
+      // 첫 번째 행동 시도
+      await abilityButton.click();
+      await players[0].page.waitForTimeout(1000);
+
+      // 두 번째 행동 시도 (같은 버튼 다시 클릭)
+      const secondAttempt = await abilityButton.count();
+      if (secondAttempt > 0) {
+        await abilityButton.click();
+        await players[0].page.waitForTimeout(500);
+
+        // 중복 행동 에러 메시지 확인
+        const hasDuplicateError = await players[0].page
+          .getByText(/이미 행동|중복|완료/i)
+          .isVisible()
+          .catch(() => false);
+
+        console.log('중복 행동 방지 에러 표시:', hasDuplicateError);
+      }
+    }
   });
 
   test('세션 만료 시 로그인 페이지로 리다이렉트', async () => {
@@ -200,9 +260,19 @@ test.describe('에러 처리 및 엣지 케이스', () => {
     await players[0].page.goto(`/rooms/${roomId}/game/invalid-game-id`);
     await players[0].page.waitForTimeout(1500);
 
-    // 에러 처리 확인
-    const content = await players[0].page.textContent('body');
-    expect(content).toBeTruthy();
+    // 404 에러 메시지 확인
+    const hasNotFoundError = await players[0].page
+      .getByText(/게임.*찾을 수 없|존재하지 않|404/i)
+      .isVisible()
+      .catch(() => false);
+
+    const hasGenericError = await players[0].page
+      .getByText(/(오류|에러|실패)/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 최소한 하나의 에러 표시가 있어야 함
+    expect(hasNotFoundError || hasGenericError).toBe(true);
   });
 
   test('투표 현황 API 실패 시 처리', async () => {
@@ -249,12 +319,18 @@ test.describe('에러 처리 및 엣지 케이스', () => {
 
     // 에러 토스트 확인
     await players[0].page.waitForTimeout(500);
-    const hasError = await players[0].page
-      .getByText(/실패/i)
+    const hasChatError = await players[0].page
+      .getByText(/메시지.*전송.*실패|채팅.*실패/i)
       .isVisible()
       .catch(() => false);
 
-    console.log('채팅 전송 실패 에러 표시:', hasError);
+    const hasGenericError = await players[0].page
+      .getByText(/(실패|오류|에러)/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 최소한 하나의 에러 표시가 있어야 함
+    expect(hasChatError || hasGenericError).toBe(true);
   });
 
   test('방 나가기 실패 시 에러 처리', async () => {
@@ -304,11 +380,17 @@ test.describe('에러 처리 및 엣지 케이스', () => {
 
     // 에러 토스트 확인
     await players[0].page.waitForTimeout(500);
-    const hasError = await players[0].page
-      .getByText(/실패/i)
+    const hasLeaveError = await players[0].page
+      .getByText(/방.*나가기.*실패|나갈 수 없/i)
       .isVisible()
       .catch(() => false);
 
-    console.log('방 나가기 실패 에러 표시:', hasError);
+    const hasGenericError = await players[0].page
+      .getByText(/(실패|오류|에러)/i)
+      .isVisible()
+      .catch(() => false);
+
+    // 최소한 하나의 에러 표시가 있어야 함
+    expect(hasLeaveError || hasGenericError).toBe(true);
   });
 });

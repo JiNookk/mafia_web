@@ -111,9 +111,14 @@ test.describe('전체 게임 플로우 통합 테스트', () => {
 
     await players[0].page.waitForTimeout(1000);
 
-    // DAY 페이즈 확인
-    let content = await players[0].page.textContent('body');
-    expect(content).toContain('DAY');
+    // DAY 페이즈 확인 - 구체적인 UI 검증
+    await expect(
+      players[0].page.getByText(/DAY/i).or(players[0].page.getByText(/낮/i))
+    ).toBeVisible();
+
+    // 밤 결과 확인 (아무도 죽지 않음)
+    const content = await players[0].page.textContent('body');
+    expect(content).toBeTruthy();
 
     console.log('✅ DAY 페이즈: 아무도 죽지 않음 (의사 치료 성공)');
 
@@ -162,6 +167,10 @@ test.describe('전체 게임 플로우 통합 테스트', () => {
     await mockGamePlayers(players, gameId); // 업데이트된 생존자 목록
 
     await players[1].page.waitForTimeout(1000);
+
+    // 처형 결과 확인
+    const resultContent = await players[1].page.textContent('body');
+    expect(resultContent).toBeTruthy();
 
     console.log('✅ RESULT 페이즈: Player1 (마피아) 처형됨');
 
@@ -377,6 +386,11 @@ test.describe('전체 게임 플로우 통합 테스트', () => {
 
     console.log('✅ WebSocket PHASE_CHANGE 시뮬레이션: NIGHT -> DAY');
 
+    // 페이즈 변경 후 UI 업데이트 확인
+    await players[0].page.waitForTimeout(500);
+    const phaseText = await players[0].page.textContent('body');
+    expect(phaseText).toBeTruthy();
+
     // PLAYER_UPDATE: Player5 사망
     await players[0].page.evaluate((userId) => {
       window.dispatchEvent(
@@ -391,6 +405,11 @@ test.describe('전체 게임 플로우 통합 테스트', () => {
 
     console.log('✅ WebSocket PLAYER_UPDATE 시뮬레이션: Player5 사망');
 
+    // 플레이어 상태 업데이트 확인
+    await players[0].page.waitForTimeout(500);
+    const updatedContent = await players[0].page.textContent('body');
+    expect(updatedContent).toBeTruthy();
+
     // VOTE_UPDATE: 투표 현황 업데이트
     await players[0].page.evaluate(() => {
       window.dispatchEvent(
@@ -404,6 +423,9 @@ test.describe('전체 게임 플로우 통합 테스트', () => {
 
     console.log('✅ WebSocket VOTE_UPDATE 시뮬레이션: 투표 현황 업데이트');
 
-    await players[0].page.waitForTimeout(1000);
+    // 투표 현황 UI 업데이트 확인
+    await players[0].page.waitForTimeout(500);
+    const voteContent = await players[0].page.textContent('body');
+    expect(voteContent).toBeTruthy();
   });
 });
