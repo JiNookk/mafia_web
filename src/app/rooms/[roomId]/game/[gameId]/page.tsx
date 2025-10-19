@@ -58,6 +58,12 @@ export default function GamePage() {
     myRole: (myRole?.role as GameRole) || null,
     myIsAlive: myRole?.isAlive || false,
     gameState,
+    onGameEnd: (data) => {
+      console.log('🏆 Game ended! Winner:', data.winnerTeam);
+      setTimeout(() => {
+        router.push(`/rooms/${roomId}`);
+      }, 3000);
+    },
     onPhaseChange: (data) => {
       console.log('🎯 PHASE_CHANGE received:', {
         currentPhase: data.currentPhase,
@@ -67,15 +73,6 @@ export default function GamePage() {
 
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
-
-      // 게임 종료 확인
-      if (data.lastPhaseResult?.winnerTeam) {
-        console.log('🏆 Game ended! Winner:', data.lastPhaseResult.winnerTeam);
-        setTimeout(() => {
-          router.push(`/rooms/${roomId}`);
-        }, 3000);
-        return;
-      }
 
       // 페이즈 변경시 투표 상태 및 능력 사용 상태 초기화
       setMyVotedPlayerId(null);

@@ -19,6 +19,7 @@ interface UseGameWebSocketProps {
   onPlayerUpdate: (data: GamePlayerResponse) => void;
   onChatMessage: (message: ChatMessageDto) => void;
   onVoteUpdate: () => void;
+  onGameEnd?: (data: { gameId: string; winnerTeam: string }) => void;
 }
 
 interface WebSocketHandlers {
@@ -26,6 +27,7 @@ interface WebSocketHandlers {
   onPlayerUpdateRef: React.MutableRefObject<(data: GamePlayerResponse) => void>;
   onChatMessageRef: React.MutableRefObject<(message: ChatMessageDto) => void>;
   onVoteUpdateRef: React.MutableRefObject<() => void>;
+  onGameEndRef: React.MutableRefObject<((data: { gameId: string; winnerTeam: string }) => void) | undefined>;
 }
 
 const getReconnectDelay = (attemptNumber: number): number => {
@@ -44,6 +46,10 @@ const createMessageHandler = (handlers: WebSocketHandlers) => (event: MessageEve
       handlers.onChatMessageRef.current(message.data);
     } else if (message.type === 'VOTE_UPDATE' && message.data) {
       handlers.onVoteUpdateRef.current();
+    } else if (message.type === 'GAME_ENDED' && message.data) {
+      if (handlers.onGameEndRef.current) {
+        handlers.onGameEndRef.current(message.data);
+      }
     }
   } catch (error) {
     console.error('Failed to parse WebSocket message:', error);
@@ -58,7 +64,8 @@ export function useGameWebSocket({
   onPhaseChange,
   onPlayerUpdate,
   onChatMessage,
-  onVoteUpdate
+  onVoteUpdate,
+  onGameEnd
 }: UseGameWebSocketProps) {
   const wsRefs = useRef<{ [key: string]: WebSocket }>({});
   const reconnectTimeoutRefs = useRef<{ [key: string]: NodeJS.Timeout }>({});
@@ -69,13 +76,15 @@ export function useGameWebSocket({
   const onPlayerUpdateRef = useRef(onPlayerUpdate);
   const onChatMessageRef = useRef(onChatMessage);
   const onVoteUpdateRef = useRef(onVoteUpdate);
+  const onGameEndRef = useRef(onGameEnd);
 
   useEffect(() => {
     onPhaseChangeRef.current = onPhaseChange;
     onPlayerUpdateRef.current = onPlayerUpdate;
     onChatMessageRef.current = onChatMessage;
     onVoteUpdateRef.current = onVoteUpdate;
-  }, [onPhaseChange, onPlayerUpdate, onChatMessage, onVoteUpdate]);
+    onGameEndRef.current = onGameEnd;
+  }, [onPhaseChange, onPlayerUpdate, onChatMessage, onVoteUpdate, onGameEnd]);
 
   useEffect(() => {
     if (!myRole) return;
@@ -97,7 +106,8 @@ export function useGameWebSocket({
       onPhaseChangeRef,
       onPlayerUpdateRef,
       onChatMessageRef,
-      onVoteUpdateRef
+      onVoteUpdateRef,
+      onGameEndRef
     };
 
     const connectWebSocket = (channel: string) => {
