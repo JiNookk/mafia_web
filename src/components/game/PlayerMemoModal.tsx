@@ -29,6 +29,8 @@ export function PlayerMemoModal({
 
   if (!isOpen) return null;
 
+  const sortedPlayers = [...players].sort((a, b) => (a.position || 0) - (b.position || 0));
+
   const handleOpenRoleSelect = (playerId: string) => {
     setSelectingPlayerId(playerId);
   };
@@ -57,7 +59,7 @@ export function PlayerMemoModal({
         </div>
 
         <div className="space-y-3 overflow-y-auto flex-1">
-          {players.map((player) => {
+          {sortedPlayers.map((player) => {
             const isSelecting = selectingPlayerId === player.userId;
             const selectedRole = getMemo(player.userId!);
             const roleInfo = ROLES.find(r => r.value === selectedRole);
