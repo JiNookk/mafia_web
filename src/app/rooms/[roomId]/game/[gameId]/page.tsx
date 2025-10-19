@@ -34,12 +34,16 @@ export default function GamePage() {
 
   const timer = useGameTimer(gameState, async () => {
     if (gameState?.gameId) {
-      console.log('⏰ Timer ended! Calling next-phase API');
+      console.log('⏰ Timer ended! Current phase:', gameState.currentPhase, 'Calling next-phase API');
       try {
         const response = await gameService.nextPhase(gameState.gameId);
         if (response.success && response.data) {
           const phaseData = response.data;
-          console.log('✅ Next phase response:', phaseData);
+          console.log('✅ Next phase response:', {
+            from: gameState.currentPhase,
+            to: phaseData.currentPhase,
+            dayCount: phaseData.dayCount
+          });
 
           // 상태 업데이트 (기존 gameId 유지)
           setGameState(prev => prev ? {
