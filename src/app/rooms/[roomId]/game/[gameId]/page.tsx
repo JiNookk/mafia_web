@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { gameService } from '@/services/game';
 import { GamePhase, GameRole } from '@/types/game.type';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
@@ -35,57 +34,7 @@ export default function GamePage() {
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
 
-  const timer = useGameTimer(gameState, async () => {
-    if (gameState?.gameId) {
-      console.log('⏰ Timer ended! Current phase:', gameState.currentPhase, 'Calling next-phase API');
-      try {
-        const response = await gameService.nextPhase(gameState.gameId);
-        if (response.success && response.data) {
-          const phaseData = response.data;
-          console.log('✅ Next phase response:', {
-            from: gameState.currentPhase,
-            to: phaseData.currentPhase,
-            dayCount: phaseData.dayCount
-          });
-
-          // 상태 업데이트 (기존 gameId 유지)
-          setGameState(prev => prev ? {
-            ...prev,
-            currentPhase: phaseData.currentPhase,
-            dayCount: phaseData.dayCount,
-            phaseStartTime: phaseData.phaseStartTime,
-            phaseDurationSeconds: phaseData.phaseDurationSeconds
-          } : null);
-          addPhaseChangeEvent(phaseData.currentPhase as GamePhase, phaseData.dayCount || 0);
-
-          // 페이즈 결과 처리
-          if (phaseData.lastPhaseResult) {
-            if (phaseData.currentPhase === 'DAY') {
-              // 플레이어 이름 맵 생성
-              const playerNameMap = new Map(players.map(p => [p.userId!, p.username!]));
-              addNightResultEvent(phaseData.lastPhaseResult.deaths, playerNameMap);
-            }
-            if (phaseData.lastPhaseResult.executedUserId && players.length > 0) {
-              const executedPlayer = players.find(p => p.userId === phaseData.lastPhaseResult!.executedUserId);
-              if (executedPlayer) {
-                addVoteResultEvent(executedPlayer.username);
-              }
-            }
-          }
-
-          // 플레이어 정보 다시 로드
-          loadPlayers(gameId);
-
-          // 투표 페이즈면 투표 상태 로드
-          if (phaseData.currentPhase === 'VOTE' && phaseData.dayCount) {
-            loadVoteStatus(gameId, phaseData.dayCount);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Failed to call next-phase:', error);
-      }
-    }
-  });
+  const timer = useGameTimer(gameState);
 
   const { messages, inputMessage, setInputMessage, chatContainerRef, handleSendMessage: originalSendMessage, addMessage } = useGameChat(gameId, myUserId, currentChatType);
 
