@@ -31,7 +31,7 @@ export default function GamePage() {
   const [policeCheckTrigger, setPoliceCheckTrigger] = useState(0);
 
   // 커스텀 훅 사용
-  const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
+  const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadMyRole, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo, addPoliceCheckMemo, loadPoliceCheckResults, isLocked } = usePlayerMemo(gameId);
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent, addPoliceCheckResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
@@ -159,6 +159,11 @@ export default function GamePage() {
 
       if (selectedPlayer === data.userId && !data.isAlive) {
         setSelectedPlayer(null);
+      }
+
+      // 내가 죽었다면 myRole 다시 로드
+      if (data.userId === myUserId && !data.isAlive && gameId) {
+        loadMyRole(gameId);
       }
     },
     onChatMessage: addMessage,

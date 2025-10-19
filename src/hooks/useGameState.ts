@@ -34,6 +34,17 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
     }
   };
 
+  const loadMyRole = async (gameId: string) => {
+    try {
+      const response = await gameService.getMyRole(gameId, myUserId);
+      if (response.success && response.data) {
+        setMyRole(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load my role:', error);
+    }
+  };
+
   const loadVoteStatus = async (gameId: string, dayCount: number) => {
     try {
       const response = await gameService.getVoteStatus(gameId, dayCount);
@@ -99,6 +110,7 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
     setPlayers,
     voteStatus,
     loadPlayers,
+    loadMyRole,
     loadVoteStatus,
     isLoading
   };

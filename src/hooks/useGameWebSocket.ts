@@ -42,6 +42,14 @@ const createMessageHandler = (handlers: WebSocketHandlers) => (event: MessageEve
       handlers.onPhaseChangeRef.current(message.data);
     } else if (message.type === 'PLAYER_UPDATE' && message.data) {
       handlers.onPlayerUpdateRef.current(message.data);
+    } else if (message.type === 'PLAYER_DIED' && message.data) {
+      // PLAYER_DIED 이벤트도 PLAYER_UPDATE와 동일하게 처리
+      // 여러 플레이어가 죽었을 수 있으므로 배열로 처리
+      if (message.data.deadPlayerIds && Array.isArray(message.data.deadPlayerIds)) {
+        message.data.deadPlayerIds.forEach((userId: string) => {
+          handlers.onPlayerUpdateRef.current({ userId, isAlive: false });
+        });
+      }
     } else if (message.type === 'CHAT' && message.data) {
       handlers.onChatMessageRef.current(message.data);
     } else if (message.type === 'VOTE_UPDATE' && message.data) {
