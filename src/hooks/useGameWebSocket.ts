@@ -114,7 +114,6 @@ export function useGameWebSocket({
       if (wsRefs.current[channel] &&
           (wsRefs.current[channel].readyState === WebSocket.OPEN ||
            wsRefs.current[channel].readyState === WebSocket.CONNECTING)) {
-        console.log(`WebSocket [${channel}] already connected or connecting`);
         return;
       }
 
@@ -122,26 +121,20 @@ export function useGameWebSocket({
         reconnectAttemptsRefs.current[channel] = 0;
       }
 
-      console.log(`Attempting to connect WebSocket [${channel}] (attempt ${reconnectAttemptsRefs.current[channel] + 1}/${maxReconnectAttempts})`);
-
       const wsUrl = `${wsBaseUrl}/ws/games/${gameId}/${channel}`;
       const ws = new WebSocket(wsUrl);
       wsRefs.current[channel] = ws;
 
       ws.onopen = () => {
-        console.log(`WebSocket [${channel}] connected to game:`, gameId);
         reconnectAttemptsRefs.current[channel] = 0;
       };
 
       ws.onmessage = createMessageHandler(handlers);
       ws.onerror = (error) => console.error(`WebSocket [${channel}] error:`, error);
       ws.onclose = (event: CloseEvent) => {
-        console.log(`WebSocket [${channel}] disconnected, Code:`, event.code);
-
         if (!isManualCloseRef.current && reconnectAttemptsRefs.current[channel] < maxReconnectAttempts) {
           reconnectAttemptsRefs.current[channel]++;
           const delay = getReconnectDelay(reconnectAttemptsRefs.current[channel]);
-          console.log(`Reconnecting [${channel}] in ${delay}ms...`);
 
           reconnectTimeoutRefs.current[channel] = setTimeout(() => connectWebSocket(channel), delay);
         } else if (reconnectAttemptsRefs.current[channel] >= maxReconnectAttempts) {

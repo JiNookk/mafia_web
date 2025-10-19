@@ -74,6 +74,19 @@ export function useGameEvents() {
     }
   }, [addEvent]);
 
+  const addPoliceCheckResultEvent = useCallback((targetUsername: string, targetRole: string) => {
+    const roleText = targetRole === 'MAFIA' ? '마피아' :
+                     targetRole === 'POLICE' ? '경찰' :
+                     targetRole === 'DOCTOR' ? '의사' : '시민';
+
+    addEvent({
+      id: `police-check-${Date.now()}`,
+      type: targetRole === 'MAFIA' ? 'death' : 'info',
+      message: `조사 결과: ${targetUsername}님은 ${roleText}입니다`,
+      timestamp: new Date().toISOString()
+    });
+  }, [addEvent]);
+
   return {
     events,
     addEvent,
@@ -81,6 +94,7 @@ export function useGameEvents() {
     addDeathEvent,
     addActionEvent,
     addNightResultEvent,
-    addVoteResultEvent
+    addVoteResultEvent,
+    addPoliceCheckResultEvent
   };
 }

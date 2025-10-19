@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { gameService } from '@/services/game';
 import { GamePhase, GameRole } from '@/types/game.type';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
@@ -27,11 +28,12 @@ export default function GamePage() {
   const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
   const [myVotedPlayerId, setMyVotedPlayerId] = useState<string | null>(null);
   const [myAbilityTargetId, setMyAbilityTargetId] = useState<string | null>(null);
+  const [policeCheckTrigger, setPoliceCheckTrigger] = useState(0);
 
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
-  const { memos, saveMemo, getMemo } = usePlayerMemo(gameId);
-  const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent } = useGameEvents();
+  const { memos, saveMemo, getMemo, addPoliceCheckMemo, loadPoliceCheckResults, isLocked } = usePlayerMemo(gameId);
+  const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent, addPoliceCheckResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
 
   const timer = useGameTimer(gameState);
@@ -45,7 +47,8 @@ export default function GamePage() {
     modalType: expandedMode === 'vote' || expandedMode === 'ability' ? expandedMode : null,
     onActionSuccess: addActionEvent,
     onVoteSuccess: (playerId: string) => setMyVotedPlayerId(playerId),
-    onAbilitySuccess: (playerId: string) => setMyAbilityTargetId(playerId)
+    onAbilitySuccess: (playerId: string) => setMyAbilityTargetId(playerId),
+    onPoliceCheckSuccess: () => setPoliceCheckTrigger(prev => prev + 1)
   });
 
   const handleSendMessage = () => {
@@ -53,24 +56,31 @@ export default function GamePage() {
     originalSendMessage();
   };
 
+  // 경찰 조사 결과 로드 (게임 시작시)
+  useEffect(() => {
+    if (myRole?.role === GameRole.POLICE && gameState?.gameId) {
+      gameService.getPoliceCheckResults(gameState.gameId, myUserId).then(response => {
+        if (response.success && response.data?.results) {
+          loadPoliceCheckResults(response.data.results.map(r => ({
+            targetUserId: r.targetUserId!,
+            targetRole: r.targetRole!
+          })));
+        }
+      });
+    }
+  }, [myRole?.role, gameState?.gameId, myUserId, loadPoliceCheckResults]);
+
   useGameWebSocket({
     gameId,
     myRole: (myRole?.role as GameRole) || null,
     myIsAlive: myRole?.isAlive || false,
     gameState,
     onGameEnd: (data) => {
-      console.log('🏆 Game ended! Winner:', data.winnerTeam);
       setTimeout(() => {
         router.push(`/rooms/${roomId}`);
       }, 3000);
     },
     onPhaseChange: (data) => {
-      console.log('🎯 PHASE_CHANGE received:', {
-        currentPhase: data.currentPhase,
-        dayCount: data.dayCount,
-        lastPhaseResult: data.lastPhaseResult
-      });
-
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
 
@@ -84,6 +94,26 @@ export default function GamePage() {
         if (data.currentPhase === GamePhase.DAY) {
           const playerNameMap = new Map(players.map(p => [p.userId!, p.username!]));
           addNightResultEvent(data.lastPhaseResult.deaths, playerNameMap);
+
+          // 경찰 조사 결과 표시 (경찰만)
+          if (myRole?.role === GameRole.POLICE && gameState?.gameId) {
+            gameService.getPoliceCheckResults(gameState.gameId, myUserId).then(response => {
+              if (response.success && response.data?.results) {
+                // 현재 dayCount와 일치하는 조사 결과만 표시 (어젯밤에 조사한 것)
+                const currentDayResults = response.data.results.filter(
+                  r => r.dayCount === data.dayCount
+                );
+                currentDayResults.forEach(result => {
+                  if (result.targetUsername && result.targetRole && result.targetUserId) {
+                    // 이벤트 로그에 표시
+                    addPoliceCheckResultEvent(result.targetUsername, result.targetRole);
+                    // 메모에 조사 결과 추가 (읽기 전용)
+                    addPoliceCheckMemo(result.targetUserId, result.targetUsername, result.targetRole);
+                  }
+                });
+              }
+            });
+          }
         }
 
         // 투표 결과: 처형된 사람 정보
@@ -105,12 +135,6 @@ export default function GamePage() {
       }
     },
     onPlayerUpdate: (data) => {
-      console.log('📡 WebSocket PLAYER_UPDATE received:', {
-        username: data.username,
-        userId: data.userId,
-        isAlive: data.isAlive
-      });
-
       setPlayers(prev => {
         const updated = prev.map(p =>
           p.userId === data.userId ? { ...p, ...data } : p
@@ -120,11 +144,6 @@ export default function GamePage() {
         if (oldPlayer?.isAlive && !data.isAlive && data.username) {
           addDeathEvent(data.username, data.userId!);
         }
-
-        console.log('📋 Players after PLAYER_UPDATE:', updated.map(p => ({
-          username: p.username,
-          isAlive: p.isAlive
-        })));
 
         return updated;
       });
@@ -199,8 +218,12 @@ export default function GamePage() {
         onSelectPlayer={handlePlayerSelect}
         getMemo={getMemo}
         saveMemo={saveMemo}
+        isLocked={isLocked}
         myVotedPlayerId={myVotedPlayerId}
         myAbilityTargetId={myAbilityTargetId}
+        gameId={gameId}
+        myUserId={myUserId}
+        policeCheckTrigger={policeCheckTrigger}
       />
     </div>
   );

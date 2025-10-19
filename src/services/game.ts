@@ -5,7 +5,8 @@ import {
   GamePlayersResponse,
   RegisterActionDto,
   VoteStatusResponse,
-  NextPhaseResponse
+  NextPhaseResponse,
+  PoliceCheckResultResponse
 } from "@/types/game.type";
 import { ChatMessageDto, SendChatDto } from "@/types/room.type";
 
@@ -80,6 +81,14 @@ export class GameService {
    */
   async getGameChatHistory(gameId: string, chatType: string, userId: string): Promise<ApiResponse<ChatMessageDto[]>> {
     return apiClient.get<ChatMessageDto[]>(`/games/${gameId}/chat/${chatType}?userId=${userId}`);
+  }
+
+  /**
+   * 경찰 조사 결과 조회
+   * GET /api/games/{gameId}/police-check-results?userId={userId}
+   */
+  async getPoliceCheckResults(gameId: string, userId: string): Promise<ApiResponse<PoliceCheckResultResponse>> {
+    return apiClient.get<PoliceCheckResultResponse>(`/games/${gameId}/police-check-results?userId=${userId}`);
   }
 }
 

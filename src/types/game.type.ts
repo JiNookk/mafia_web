@@ -10,6 +10,8 @@ export type VoteInfo = components['schemas']['VoteInfo'];
 export type VoteStatusResponse = components['schemas']['VoteStatusResponse'];
 export type PhaseResult = components['schemas']['PhaseResult'];
 export type NextPhaseResponse = components['schemas']['NextPhaseResponse'];
+export type CheckResult = components['schemas']['CheckResult'];
+export type PoliceCheckResultResponse = components['schemas']['PoliceCheckResultResponse'];
 
 // Enum 타입들 (API 스펙의 값과 일치)
 export enum GamePhase {

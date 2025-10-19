@@ -6,6 +6,7 @@ interface PlayerMemoGridProps {
   players: GamePlayerResponse[];
   getMemo: (playerId: string) => string;
   saveMemo: (playerId: string, memo: string) => void;
+  isLocked?: (playerId: string) => boolean;
 }
 
 const ROLES = [
@@ -15,10 +16,14 @@ const ROLES = [
   { value: GameRole.POLICE, label: '경찰', emoji: '👮', color: 'bg-yellow-500/20 border-yellow-500' },
 ];
 
-export function PlayerMemoGrid({ players, getMemo, saveMemo }: PlayerMemoGridProps) {
+export function PlayerMemoGrid({ players, getMemo, saveMemo, isLocked }: PlayerMemoGridProps) {
   const [selectingPlayerId, setSelectingPlayerId] = useState<string | null>(null);
 
   const handleCardClick = (playerId: string) => {
+    // 잠긴 메모는 선택 불가
+    if (isLocked && isLocked(playerId)) {
+      return;
+    }
     setSelectingPlayerId(playerId);
   };
 
@@ -42,6 +47,7 @@ export function PlayerMemoGrid({ players, getMemo, saveMemo }: PlayerMemoGridPro
         {players.map((player) => {
           const selectedRole = getMemo(player.userId!);
           const roleInfo = ROLES.find(r => r.value === selectedRole);
+          const locked = isLocked && isLocked(player.userId!);
 
           return (
             <div
@@ -49,8 +55,8 @@ export function PlayerMemoGrid({ players, getMemo, saveMemo }: PlayerMemoGridPro
               onClick={() => player.isAlive && handleCardClick(player.userId!)}
               className={`
                 relative rounded-xl p-2 text-center transition-all border
-                bg-card/50 hover:bg-card/70 border-border/30
-                ${!player.isAlive ? 'opacity-60' : 'cursor-pointer'}
+                ${locked ? 'bg-primary/10 border-primary' : 'bg-card/50 hover:bg-card/70 border-border/30'}
+                ${!player.isAlive ? 'opacity-60' : locked ? '' : 'cursor-pointer'}
               `}
             >
               {/* 직업 표시 (오른쪽 상단) */}

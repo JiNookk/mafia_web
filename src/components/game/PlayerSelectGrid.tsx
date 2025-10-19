@@ -8,19 +8,12 @@ interface PlayerSelectGridProps {
 }
 
 export function PlayerSelectGrid({ players, onSelectPlayer, myVotedPlayerId, myAbilityTargetId }: PlayerSelectGridProps) {
-  const alivePlayers = players.filter(p => p.isAlive === true);
-
-  console.log('👥 PlayerSelectGrid - All players:', players.map(p => ({
-    username: p.username,
-    isAlive: p.isAlive,
-    voteCount: p.voteCount
-  })));
-  console.log('✅ PlayerSelectGrid - Alive players:', alivePlayers.map(p => p.username));
-  console.log('🎯 myVotedPlayerId:', myVotedPlayerId);
-  console.log('🎯 myAbilityTargetId:', myAbilityTargetId);
+  const alivePlayers = players
+    .filter(p => p.isAlive === true)
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
 
   return (
-    <div className="grid grid-cols-4 gap-2 p-3">
+    <div className="grid grid-cols-4 gap-2">
       {alivePlayers.map((player) => {
         const isMyVote = myVotedPlayerId === player.userId;
         const isMyAbilityTarget = myAbilityTargetId === player.userId;

@@ -27,10 +27,6 @@ export function useGameState(roomId: string, myUserId: string, gameId?: string) 
     try {
       const response = await gameService.getPlayers(gameId);
       if (response.success && response.data && response.data.players) {
-        console.log('🔄 Players reloaded:', response.data.players.map(p => ({
-          username: p.username,
-          isAlive: p.isAlive
-        })));
         setPlayers(response.data.players.map(p => ({ ...p, voteCount: 0 })));
       }
     } catch (error) {

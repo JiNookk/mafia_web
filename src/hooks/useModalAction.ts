@@ -13,6 +13,7 @@ interface UseModalActionProps {
   onActionSuccess: (username: string, actionText: string) => void;
   onVoteSuccess?: (playerId: string) => void;
   onAbilitySuccess?: (playerId: string) => void;
+  onPoliceCheckSuccess?: () => void;
 }
 
 export function useModalAction({
@@ -22,7 +23,8 @@ export function useModalAction({
   modalType,
   onActionSuccess,
   onVoteSuccess,
-  onAbilitySuccess
+  onAbilitySuccess,
+  onPoliceCheckSuccess
 }: UseModalActionProps) {
   const getActionType = useCallback((modalType: ModalType): ActionType | null => {
     if (modalType === 'vote') return ActionType.VOTE;
@@ -90,11 +92,16 @@ export function useModalAction({
         if (modalType === 'ability' && onAbilitySuccess) {
           onAbilitySuccess(playerId);
         }
+
+        // 경찰 조사 성공시 콜백 호출
+        if (actionType === ActionType.POLICE_CHECK && onPoliceCheckSuccess) {
+          onPoliceCheckSuccess();
+        }
       }
     } catch (error) {
       console.error('Failed to register action:', error);
     }
-  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess, onVoteSuccess, onAbilitySuccess]);
+  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess, onVoteSuccess, onAbilitySuccess, onPoliceCheckSuccess]);
 
   return { executeAction };
 }
