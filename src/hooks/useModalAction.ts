@@ -11,6 +11,7 @@ interface UseModalActionProps {
   players: PlayerWithVotes[];
   modalType: ModalType;
   onActionSuccess: (username: string, actionText: string) => void;
+  onVoteSuccess?: (playerId: string) => void;
 }
 
 export function useModalAction({
@@ -18,7 +19,8 @@ export function useModalAction({
   myRole,
   players,
   modalType,
-  onActionSuccess
+  onActionSuccess,
+  onVoteSuccess
 }: UseModalActionProps) {
   const getActionType = useCallback((modalType: ModalType): ActionType | null => {
     if (modalType === 'vote') return ActionType.VOTE;
@@ -76,11 +78,16 @@ export function useModalAction({
         if (player && player.username) {
           onActionSuccess(player.username, actionText);
         }
+
+        // 투표 성공시 콜백 호출
+        if (modalType === 'vote' && onVoteSuccess) {
+          onVoteSuccess(playerId);
+        }
       }
     } catch (error) {
       console.error('Failed to register action:', error);
     }
-  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess]);
+  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess, onVoteSuccess]);
 
   return { executeAction };
 }

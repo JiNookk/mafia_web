@@ -1,5 +1,6 @@
-import { GamePhase, GameRole, GamePlayerResponse } from '@/types/game.type';
+import { GamePhase, GameRole } from '@/types/game.type';
 import { ChatType } from '@/types/room.type';
+import { PlayerWithVotes } from '@/hooks/useGameState';
 import { PlayerMemoGrid } from './PlayerMemoGrid';
 import { ExpandedHeader } from './ExpandedHeader';
 import { ChatInput } from './ChatInput';
@@ -22,10 +23,11 @@ interface GameActionBarProps {
   onOpenMemo: () => void;
   onOpenAbility: () => void;
   onClose: () => void;
-  players: GamePlayerResponse[];
+  players: PlayerWithVotes[];
   onSelectPlayer: (playerId: string) => void;
   getMemo: (playerId: string) => string;
   saveMemo: (playerId: string, memo: string) => void;
+  myVotedPlayerId?: string | null;
 }
 
 export function GameActionBar({
@@ -45,7 +47,8 @@ export function GameActionBar({
   players,
   onSelectPlayer,
   getMemo,
-  saveMemo
+  saveMemo,
+  myVotedPlayerId
 }: GameActionBarProps) {
   const isExpanded = expandedMode !== null;
 
@@ -85,7 +88,7 @@ export function GameActionBar({
           {expandedMode === 'memo' ? (
             <PlayerMemoGrid players={players} getMemo={getMemo} saveMemo={saveMemo} />
           ) : (
-            <PlayerSelectGrid players={players} onSelectPlayer={onSelectPlayer} />
+            <PlayerSelectGrid players={players} onSelectPlayer={onSelectPlayer} myVotedPlayerId={myVotedPlayerId} />
           )}
         </div>
       )}

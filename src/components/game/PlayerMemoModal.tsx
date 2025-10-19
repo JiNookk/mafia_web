@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PlayerWithVotes } from '@/hooks/useGameState';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { GameRole } from '@/types/game.type';
 
 interface PlayerMemoModalProps {
   players: PlayerWithVotes[];
@@ -11,6 +11,13 @@ interface PlayerMemoModalProps {
   saveMemo: (playerId: string, memo: string) => void;
 }
 
+const ROLES = [
+  { value: GameRole.CITIZEN, label: '시민', emoji: '👤', color: 'bg-blue-500/20 border-blue-500' },
+  { value: GameRole.MAFIA, label: '마피아', emoji: '🔫', color: 'bg-red-500/20 border-red-500' },
+  { value: GameRole.DOCTOR, label: '의사', emoji: '⚕️', color: 'bg-green-500/20 border-green-500' },
+  { value: GameRole.POLICE, label: '경찰', emoji: '👮', color: 'bg-yellow-500/20 border-yellow-500' },
+];
+
 export function PlayerMemoModal({
   players,
   isOpen,
@@ -18,25 +25,22 @@ export function PlayerMemoModal({
   getMemo,
   saveMemo
 }: PlayerMemoModalProps) {
-  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
-  const [tempMemo, setTempMemo] = useState('');
+  const [selectingPlayerId, setSelectingPlayerId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleStartEdit = (playerId: string) => {
-    setEditingPlayerId(playerId);
-    setTempMemo(getMemo(playerId));
+  const handleOpenRoleSelect = (playerId: string) => {
+    setSelectingPlayerId(playerId);
   };
 
-  const handleSave = (playerId: string) => {
-    saveMemo(playerId, tempMemo);
-    setEditingPlayerId(null);
-    setTempMemo('');
+  const handleSelectRole = (playerId: string, role: string) => {
+    saveMemo(playerId, role);
+    setSelectingPlayerId(null);
   };
 
-  const handleCancel = () => {
-    setEditingPlayerId(null);
-    setTempMemo('');
+  const handleClearRole = (playerId: string) => {
+    saveMemo(playerId, '');
+    setSelectingPlayerId(null);
   };
 
   return (
@@ -54,8 +58,9 @@ export function PlayerMemoModal({
 
         <div className="space-y-3 overflow-y-auto flex-1">
           {players.map((player) => {
-            const isEditing = editingPlayerId === player.userId;
-            const memo = getMemo(player.userId!);
+            const isSelecting = selectingPlayerId === player.userId;
+            const selectedRole = getMemo(player.userId!);
+            const roleInfo = ROLES.find(r => r.value === selectedRole);
 
             return (
               <div
@@ -74,39 +79,39 @@ export function PlayerMemoModal({
                   )}
                 </div>
 
-                {isEditing ? (
+                {isSelecting ? (
                   <div className="space-y-2">
-                    <Input
-                      value={tempMemo}
-                      onChange={(e) => setTempMemo(e.target.value)}
-                      placeholder="직업이나 메모 입력..."
-                      className="text-sm"
-                      autoFocus
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleSave(player.userId!)}
-                        className="flex-1 h-8 text-xs"
-                      >
-                        저장
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        className="flex-1 h-8 text-xs bg-muted hover:bg-muted/80"
-                      >
-                        취소
-                      </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ROLES.map((role) => (
+                        <button
+                          key={role.value}
+                          onClick={() => handleSelectRole(player.userId!, role.value)}
+                          className={`p-2 rounded-lg border-2 transition-all hover:scale-105 ${role.color}`}
+                        >
+                          <div className="text-lg">{role.emoji}</div>
+                          <div className="text-xs font-medium">{role.label}</div>
+                        </button>
+                      ))}
                     </div>
+                    <Button
+                      onClick={() => handleClearRole(player.userId!)}
+                      className="w-full h-8 text-xs bg-muted hover:bg-muted/80"
+                    >
+                      초기화
+                    </Button>
                   </div>
                 ) : (
                   <div
-                    onClick={() => handleStartEdit(player.userId!)}
-                    className="cursor-pointer hover:bg-muted/30 rounded p-2 min-h-[32px] transition-colors"
+                    onClick={() => handleOpenRoleSelect(player.userId!)}
+                    className="cursor-pointer hover:bg-muted/30 rounded p-2 min-h-[32px] transition-colors flex items-center justify-center"
                   >
-                    {memo ? (
-                      <p className="text-sm">{memo}</p>
+                    {roleInfo ? (
+                      <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border-2 ${roleInfo.color}`}>
+                        <span>{roleInfo.emoji}</span>
+                        <span className="text-sm font-medium">{roleInfo.label}</span>
+                      </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">클릭하여 메모 추가</p>
+                      <p className="text-xs text-muted-foreground">클릭하여 직업 선택</p>
                     )}
                   </div>
                 )}

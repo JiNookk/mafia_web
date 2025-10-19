@@ -25,6 +25,7 @@ export default function GamePage() {
 
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
+  const [myVotedPlayerId, setMyVotedPlayerId] = useState<string | null>(null);
 
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
@@ -91,7 +92,8 @@ export default function GamePage() {
     myRole,
     players,
     modalType: expandedMode === 'vote' || expandedMode === 'ability' ? expandedMode : null,
-    onActionSuccess: addActionEvent
+    onActionSuccess: addActionEvent,
+    onVoteSuccess: (playerId: string) => setMyVotedPlayerId(playerId)
   });
 
   const handleSendMessage = () => {
@@ -181,7 +183,10 @@ export default function GamePage() {
     if (expandedMode === 'vote' || expandedMode === 'ability') {
       setSelectedPlayer(playerId);
       executeAction(playerId);
-      setExpandedMode(null);
+      // 투표는 그리드를 열어두고, 능력사용만 닫기
+      if (expandedMode === 'ability') {
+        setExpandedMode(null);
+      }
     }
   };
 
@@ -226,11 +231,15 @@ export default function GamePage() {
         onOpenVote={() => setExpandedMode('vote')}
         onOpenMemo={() => setExpandedMode('memo')}
         onOpenAbility={() => setExpandedMode('ability')}
-        onClose={() => setExpandedMode(null)}
+        onClose={() => {
+          setExpandedMode(null);
+          setMyVotedPlayerId(null);
+        }}
         players={players}
         onSelectPlayer={handlePlayerSelect}
         getMemo={getMemo}
         saveMemo={saveMemo}
+        myVotedPlayerId={myVotedPlayerId}
       />
     </div>
   );
