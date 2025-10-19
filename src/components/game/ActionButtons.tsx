@@ -6,6 +6,7 @@ interface ActionButtonsProps {
   myRole: GameRole;
   myIsAlive: boolean;
   isExpanded: boolean;
+  expandedMode: 'vote' | 'ability' | 'memo' | null;
   onOpenVote: () => void;
   onOpenMemo: () => void;
   onOpenAbility: () => void;
@@ -16,6 +17,7 @@ export function ActionButtons({
   myRole,
   myIsAlive,
   isExpanded,
+  expandedMode,
   onOpenVote,
   onOpenMemo,
   onOpenAbility
@@ -34,7 +36,11 @@ export function ActionButtons({
         {showAbilityButton && (
           <Button
             onClick={onOpenAbility}
-            className="h-12 text-sm font-semibold gradient-danger hover:scale-[1.02] active:scale-[0.98] transition-transform"
+            className={`h-12 text-sm font-semibold transition-transform ${
+              expandedMode === 'ability'
+                ? 'gradient-danger ring-2 ring-red-500 ring-offset-2 ring-offset-card scale-105'
+                : 'gradient-danger hover:scale-[1.02] active:scale-[0.98]'
+            }`}
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">⚡</span>
@@ -47,7 +53,11 @@ export function ActionButtons({
         {showVoteButton && (
           <Button
             onClick={onOpenVote}
-            className="h-12 text-sm font-semibold gradient-primary hover:scale-[1.02] active:scale-[0.98] transition-transform"
+            className={`h-12 text-sm font-semibold transition-transform ${
+              expandedMode === 'vote'
+                ? 'gradient-primary ring-2 ring-primary ring-offset-2 ring-offset-card scale-105'
+                : 'gradient-primary hover:scale-[1.02] active:scale-[0.98]'
+            }`}
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">📊</span>
@@ -59,7 +69,11 @@ export function ActionButtons({
         {/* 메모 버튼 (항상) */}
         <Button
           onClick={onOpenMemo}
-          className="h-12 text-sm font-semibold bg-muted hover:bg-muted/80 hover:scale-[1.02] active:scale-[0.98] transition-transform"
+          className={`h-12 text-sm font-semibold transition-transform ${
+            expandedMode === 'memo'
+              ? 'bg-muted ring-2 ring-muted-foreground ring-offset-2 ring-offset-card scale-105'
+              : 'bg-muted hover:bg-muted/80 hover:scale-[1.02] active:scale-[0.98]'
+          }`}
         >
           <div className="flex items-center gap-2">
             <span className="text-xl">📝</span>

@@ -114,6 +114,7 @@ export function GameActionBar({
         myRole={myRole}
         myIsAlive={myIsAlive}
         isExpanded={isExpanded}
+        expandedMode={expandedMode}
         onOpenVote={onOpenVote}
         onOpenMemo={onOpenMemo}
         onOpenAbility={onOpenAbility}
@@ -125,18 +126,12 @@ export function GameActionBar({
           {expandedMode === 'memo' ? (
             <PlayerMemoGrid players={players} getMemo={getMemo} saveMemo={saveMemo} isLocked={isLocked} />
           ) : (
-            <>
-              <PlayerSelectGrid
-                players={players}
-                onSelectPlayer={onSelectPlayer}
-                myVotedPlayerId={myVotedPlayerId}
-                myAbilityTargetId={myAbilityTargetId}
-              />
-              {/* 경찰이 능력 사용 모드일 때 조사 결과 표시 */}
-              {myRole === GameRole.POLICE && expandedMode === 'ability' && (
-                <PoliceCheckResults results={policeCheckResults} />
-              )}
-            </>
+            <PlayerSelectGrid
+              players={players}
+              onSelectPlayer={onSelectPlayer}
+              myVotedPlayerId={myVotedPlayerId}
+              myAbilityTargetId={myAbilityTargetId}
+            />
           )}
         </div>
       )}

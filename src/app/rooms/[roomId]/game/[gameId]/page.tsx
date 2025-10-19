@@ -88,6 +88,15 @@ export default function GamePage() {
       setMyVotedPlayerId(null);
       setMyAbilityTargetId(null);
 
+      // 페이즈에 맞지 않는 모달 닫기
+      const newPhase = data.currentPhase as GamePhase;
+      if (expandedMode === 'vote' && newPhase !== GamePhase.DAY && newPhase !== GamePhase.VOTE) {
+        setExpandedMode(null);
+      }
+      if (expandedMode === 'ability' && newPhase !== GamePhase.NIGHT) {
+        setExpandedMode(null);
+      }
+
       // 페이즈 결과 처리
       if (data.lastPhaseResult) {
         // 밤 -> 낮: 밤에 죽은 사람 정보

@@ -19,6 +19,8 @@ const ROLES = [
 export function PlayerMemoGrid({ players, getMemo, saveMemo, isLocked }: PlayerMemoGridProps) {
   const [selectingPlayerId, setSelectingPlayerId] = useState<string | null>(null);
 
+  const sortedPlayers = [...players].sort((a, b) => (a.position || 0) - (b.position || 0));
+
   const handleCardClick = (playerId: string) => {
     // 잠긴 메모는 선택 불가
     if (isLocked && isLocked(playerId)) {
@@ -44,7 +46,7 @@ export function PlayerMemoGrid({ players, getMemo, saveMemo, isLocked }: PlayerM
   return (
     <>
       <div className="grid grid-cols-4 gap-2 p-3">
-        {players.map((player) => {
+        {sortedPlayers.map((player) => {
           const selectedRole = getMemo(player.userId!);
           const roleInfo = ROLES.find(r => r.value === selectedRole);
           const locked = isLocked && isLocked(player.userId!);
