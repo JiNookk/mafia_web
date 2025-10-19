@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { gameService } from '@/services/game';
 import { GamePhase, GameRole } from '@/types/game.type';
 import { useGameState } from '@/hooks/useGameState';
@@ -18,6 +18,7 @@ import { GameActionBar } from '@/components/game/GameActionBar';
 
 export default function GamePage() {
   const params = useParams();
+  const router = useRouter();
   const roomId = params.roomId as string;
   const gameId = params.gameId as string;
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('mafia_session_id') || '' : '';
@@ -117,6 +118,15 @@ export default function GamePage() {
 
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
+
+      // 게임 종료 확인
+      if (data.lastPhaseResult?.winnerTeam) {
+        console.log('🏆 Game ended! Winner:', data.lastPhaseResult.winnerTeam);
+        setTimeout(() => {
+          router.push(`/rooms/${roomId}`);
+        }, 3000);
+        return;
+      }
 
       // 페이즈 변경시 투표 상태 및 능력 사용 상태 초기화
       setMyVotedPlayerId(null);
