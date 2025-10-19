@@ -4,9 +4,10 @@ interface PlayerSelectGridProps {
   players: PlayerWithVotes[];
   onSelectPlayer: (playerId: string) => void;
   myVotedPlayerId?: string | null;
+  myAbilityTargetId?: string | null;
 }
 
-export function PlayerSelectGrid({ players, onSelectPlayer, myVotedPlayerId }: PlayerSelectGridProps) {
+export function PlayerSelectGrid({ players, onSelectPlayer, myVotedPlayerId, myAbilityTargetId }: PlayerSelectGridProps) {
   const alivePlayers = players.filter(p => p.isAlive === true);
 
   console.log('👥 PlayerSelectGrid - All players:', players.map(p => ({
@@ -15,11 +16,15 @@ export function PlayerSelectGrid({ players, onSelectPlayer, myVotedPlayerId }: P
     voteCount: p.voteCount
   })));
   console.log('✅ PlayerSelectGrid - Alive players:', alivePlayers.map(p => p.username));
+  console.log('🎯 myVotedPlayerId:', myVotedPlayerId);
+  console.log('🎯 myAbilityTargetId:', myAbilityTargetId);
 
   return (
     <div className="grid grid-cols-4 gap-2 p-3">
       {alivePlayers.map((player) => {
         const isMyVote = myVotedPlayerId === player.userId;
+        const isMyAbilityTarget = myAbilityTargetId === player.userId;
+        const isHighlighted = isMyVote || isMyAbilityTarget;
         const hasVotes = player.voteCount > 0;
 
         return (
@@ -27,7 +32,7 @@ export function PlayerSelectGrid({ players, onSelectPlayer, myVotedPlayerId }: P
             key={player.userId}
             onClick={() => onSelectPlayer(player.userId!)}
             className={`relative rounded-xl p-2 text-center transition-all border ${
-              isMyVote
+              isHighlighted
                 ? 'bg-primary/30 border-primary border-2 scale-105'
                 : 'bg-card/50 hover:bg-card/70 active:scale-[0.98] border-border/30'
             }`}

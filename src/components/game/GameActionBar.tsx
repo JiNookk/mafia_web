@@ -28,6 +28,7 @@ interface GameActionBarProps {
   getMemo: (playerId: string) => string;
   saveMemo: (playerId: string, memo: string) => void;
   myVotedPlayerId?: string | null;
+  myAbilityTargetId?: string | null;
 }
 
 export function GameActionBar({
@@ -48,7 +49,8 @@ export function GameActionBar({
   onSelectPlayer,
   getMemo,
   saveMemo,
-  myVotedPlayerId
+  myVotedPlayerId,
+  myAbilityTargetId
 }: GameActionBarProps) {
   const isExpanded = expandedMode !== null;
 
@@ -88,7 +90,12 @@ export function GameActionBar({
           {expandedMode === 'memo' ? (
             <PlayerMemoGrid players={players} getMemo={getMemo} saveMemo={saveMemo} />
           ) : (
-            <PlayerSelectGrid players={players} onSelectPlayer={onSelectPlayer} myVotedPlayerId={myVotedPlayerId} />
+            <PlayerSelectGrid
+              players={players}
+              onSelectPlayer={onSelectPlayer}
+              myVotedPlayerId={myVotedPlayerId}
+              myAbilityTargetId={myAbilityTargetId}
+            />
           )}
         </div>
       )}

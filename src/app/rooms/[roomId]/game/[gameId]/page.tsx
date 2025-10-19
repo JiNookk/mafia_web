@@ -26,6 +26,7 @@ export default function GamePage() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [expandedMode, setExpandedMode] = useState<'vote' | 'ability' | 'memo' | null>(null);
   const [myVotedPlayerId, setMyVotedPlayerId] = useState<string | null>(null);
+  const [myAbilityTargetId, setMyAbilityTargetId] = useState<string | null>(null);
 
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
@@ -93,7 +94,8 @@ export default function GamePage() {
     players,
     modalType: expandedMode === 'vote' || expandedMode === 'ability' ? expandedMode : null,
     onActionSuccess: addActionEvent,
-    onVoteSuccess: (playerId: string) => setMyVotedPlayerId(playerId)
+    onVoteSuccess: (playerId: string) => setMyVotedPlayerId(playerId),
+    onAbilitySuccess: (playerId: string) => setMyAbilityTargetId(playerId)
   });
 
   const handleSendMessage = () => {
@@ -115,6 +117,10 @@ export default function GamePage() {
 
       setGameState(prev => prev ? { ...prev, ...data } : null);
       addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
+
+      // 페이즈 변경시 투표 상태 및 능력 사용 상태 초기화
+      setMyVotedPlayerId(null);
+      setMyAbilityTargetId(null);
 
       // 페이즈 결과 처리
       if (data.lastPhaseResult) {
@@ -183,10 +189,7 @@ export default function GamePage() {
     if (expandedMode === 'vote' || expandedMode === 'ability') {
       setSelectedPlayer(playerId);
       executeAction(playerId);
-      // 투표는 그리드를 열어두고, 능력사용만 닫기
-      if (expandedMode === 'ability') {
-        setExpandedMode(null);
-      }
+      // 투표와 능력사용 모두 그리드를 열어둠
     }
   };
 
@@ -234,12 +237,14 @@ export default function GamePage() {
         onClose={() => {
           setExpandedMode(null);
           setMyVotedPlayerId(null);
+          setMyAbilityTargetId(null);
         }}
         players={players}
         onSelectPlayer={handlePlayerSelect}
         getMemo={getMemo}
         saveMemo={saveMemo}
         myVotedPlayerId={myVotedPlayerId}
+        myAbilityTargetId={myAbilityTargetId}
       />
     </div>
   );

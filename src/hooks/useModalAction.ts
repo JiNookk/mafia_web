@@ -12,6 +12,7 @@ interface UseModalActionProps {
   modalType: ModalType;
   onActionSuccess: (username: string, actionText: string) => void;
   onVoteSuccess?: (playerId: string) => void;
+  onAbilitySuccess?: (playerId: string) => void;
 }
 
 export function useModalAction({
@@ -20,7 +21,8 @@ export function useModalAction({
   players,
   modalType,
   onActionSuccess,
-  onVoteSuccess
+  onVoteSuccess,
+  onAbilitySuccess
 }: UseModalActionProps) {
   const getActionType = useCallback((modalType: ModalType): ActionType | null => {
     if (modalType === 'vote') return ActionType.VOTE;
@@ -83,11 +85,16 @@ export function useModalAction({
         if (modalType === 'vote' && onVoteSuccess) {
           onVoteSuccess(playerId);
         }
+
+        // 능력 사용 성공시 콜백 호출
+        if (modalType === 'ability' && onAbilitySuccess) {
+          onAbilitySuccess(playerId);
+        }
       }
     } catch (error) {
       console.error('Failed to register action:', error);
     }
-  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess, onVoteSuccess]);
+  }, [gameState, myRole, modalType, players, getActionType, getActionText, onActionSuccess, onVoteSuccess, onAbilitySuccess]);
 
   return { executeAction };
 }
