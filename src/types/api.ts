@@ -322,6 +322,7 @@ export interface components {
             winnerTeam?: "MAFIA" | "CITIZEN" | "DRAW";
             /** Format: date-time */
             finishedAt?: string;
+            defendantUserId?: string;
         };
         SendChatDto: {
             userId: string;
@@ -357,10 +358,11 @@ export interface components {
             executedUserId?: string;
             /** @enum {string} */
             winnerTeam?: "MAFIA" | "CITIZEN" | "DRAW";
+            wasSavedByDoctor?: boolean;
         };
         RegisterActionDto: {
             /** @enum {string} */
-            type: "VOTE" | "MAFIA_KILL" | "DOCTOR_HEAL" | "POLICE_CHECK";
+            type: "VOTE" | "MAFIA_KILL" | "DOCTOR_HEAL" | "POLICE_CHECK" | "FINAL_VOTE";
             targetUserId: string;
             actorUserId?: string;
         };

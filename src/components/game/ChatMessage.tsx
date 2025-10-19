@@ -4,9 +4,10 @@ import { getChatTypeLabel, getChatTypeColor } from '@/utils/chatType.utils';
 interface ChatMessageProps {
   message: ChatMessageDto;
   isMyMessage: boolean;
+  isDeadPlayer?: boolean;
 }
 
-export function ChatMessage({ message, isMyMessage }: ChatMessageProps) {
+export function ChatMessage({ message, isMyMessage, isDeadPlayer = false }: ChatMessageProps) {
   return (
     <div className="animate-fade-in">
       <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
@@ -14,7 +15,7 @@ export function ChatMessage({ message, isMyMessage }: ChatMessageProps) {
           <div className="flex items-center gap-2 mb-1">
             {!isMyMessage && (
               <span className="text-xs font-semibold text-primary">
-                {message.nickname}
+                {isDeadPlayer && '💀 '}{message.nickname}
               </span>
             )}
             <span className={`text-xs px-2 py-0.5 rounded-full ${getChatTypeColor(message.chatType as ChatType)}`}>

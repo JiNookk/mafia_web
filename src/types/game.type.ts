@@ -1,7 +1,9 @@
 import { components } from './api';
 
-// API 스펙에서 타입 가져오기
-export type GameStateResponse = components['schemas']['GameStateResponse'];
+// API 스펙에서 타입 가져오기 (defendantUserId 필드 추가)
+export type GameStateResponse = components['schemas']['GameStateResponse'] & {
+  defendantUserId?: string;
+};
 export type MyRoleResponse = components['schemas']['MyRoleResponse'];
 export type GamePlayerResponse = components['schemas']['GamePlayerResponse'];
 export type GamePlayersResponse = components['schemas']['GamePlayersResponse'];
@@ -33,5 +35,6 @@ export enum ActionType {
   VOTE = 'VOTE',
   MAFIA_KILL = 'MAFIA_KILL',
   DOCTOR_HEAL = 'DOCTOR_HEAL',
-  POLICE_CHECK = 'POLICE_CHECK'
+  POLICE_CHECK = 'POLICE_CHECK',
+  FINAL_VOTE = 'FINAL_VOTE'
 }

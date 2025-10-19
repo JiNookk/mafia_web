@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { gameService } from '@/services/game';
-import { GamePhase, GameRole } from '@/types/game.type';
+import { GamePhase, GameRole, ActionType } from '@/types/game.type';
 import { useGameState } from '@/hooks/useGameState';
 import { useGameWebSocket } from '@/hooks/useGameWebSocket';
 import { useGameTimer } from '@/hooks/useGameTimer';
@@ -12,6 +12,7 @@ import { usePlayerMemo } from '@/hooks/usePlayerMemo';
 import { useChatPermission } from '@/hooks/useChatPermission';
 import { useGameEvents } from '@/hooks/useGameEvents';
 import { useModalAction } from '@/hooks/useModalAction';
+import { useDeathSound } from '@/hooks/useDeathSound';
 import { SimpleGameHeader } from '@/components/game/SimpleGameHeader';
 import { GameChatPanel } from '@/components/game/GameChatPanel';
 import { GameActionBar } from '@/components/game/GameActionBar';
@@ -29,12 +30,14 @@ export default function GamePage() {
   const [myVotedPlayerId, setMyVotedPlayerId] = useState<string | null>(null);
   const [myAbilityTargetId, setMyAbilityTargetId] = useState<string | null>(null);
   const [policeCheckTrigger, setPoliceCheckTrigger] = useState(0);
+  const [previousPhase, setPreviousPhase] = useState<GamePhase | null>(null);
 
   // 커스텀 훅 사용
   const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadMyRole, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo, addPoliceCheckMemo, loadPoliceCheckResults, isLocked } = usePlayerMemo(gameId);
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent, addPoliceCheckResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
+  const { playDeathSound, playHealSound, playVoteDeathSound } = useDeathSound();
 
   const timer = useGameTimer(gameState);
 
@@ -54,6 +57,25 @@ export default function GamePage() {
   const handleSendMessage = () => {
     if (!canChat) return;
     originalSendMessage();
+  };
+
+  const handleFinalVote = async () => {
+    if (!gameState?.gameId || !gameState.defendantUserId) return;
+
+    try {
+      const response = await gameService.registerAction(gameState.gameId, {
+        type: ActionType.FINAL_VOTE,
+        targetUserId: gameState.defendantUserId,
+        actorUserId: myUserId
+      });
+
+      if (response.success) {
+        setMyVotedPlayerId(gameState.defendantUserId);
+        addActionEvent('처형에 투표', '했습니다');
+      }
+    } catch (error) {
+      console.error('Failed to register final vote:', error);
+    }
   };
 
   // 경찰 조사 결과 로드 (게임 시작시)
@@ -81,15 +103,17 @@ export default function GamePage() {
       }, 3000);
     },
     onPhaseChange: (data) => {
+      const newPhase = data.currentPhase as GamePhase;
+
       setGameState(prev => prev ? { ...prev, ...data } : null);
-      addPhaseChangeEvent(data.currentPhase as GamePhase, data.dayCount || 0);
+      addPhaseChangeEvent(newPhase, data.dayCount || 0);
 
       // 페이즈 변경시 투표 상태 및 능력 사용 상태 초기화
+      // RESULT 페이즈로 전환될 때도 초기화 (새로운 최종 투표를 위해)
       setMyVotedPlayerId(null);
       setMyAbilityTargetId(null);
 
       // 페이즈에 맞지 않는 모달 닫기
-      const newPhase = data.currentPhase as GamePhase;
       if (expandedMode === 'vote' && newPhase !== GamePhase.DAY && newPhase !== GamePhase.VOTE) {
         setExpandedMode(null);
       }
@@ -100,9 +124,19 @@ export default function GamePage() {
       // 페이즈 결과 처리
       if (data.lastPhaseResult) {
         // 밤 -> 낮: 밤에 죽은 사람 정보
-        if (data.currentPhase === GamePhase.DAY) {
+        if (newPhase === GamePhase.DAY) {
           const playerNameMap = new Map(players.map(p => [p.userId!, p.username!]));
-          addNightResultEvent(data.lastPhaseResult.deaths, playerNameMap);
+
+          // 효과음 재생
+          if (data.lastPhaseResult.deaths && data.lastPhaseResult.deaths.length > 0) {
+            // 사망자가 있으면 사망 효과음
+            playDeathSound();
+          } else if (data.lastPhaseResult.wasSavedByDoctor) {
+            // 의사가 살렸으면 힐 효과음
+            playHealSound();
+          }
+
+          addNightResultEvent(data.lastPhaseResult.deaths, playerNameMap, data.lastPhaseResult.wasSavedByDoctor);
 
           // 경찰 조사 결과 표시 (경찰만)
           if (myRole?.role === GameRole.POLICE && gameState?.gameId) {
@@ -125,21 +159,25 @@ export default function GamePage() {
           }
         }
 
-        // 투표 결과: 처형된 사람 정보
-        if (data.lastPhaseResult.executedUserId && players.length > 0) {
+        // 최종 투표 결과: 처형된 사람 정보 (RESULT -> NIGHT 전환 시에만)
+        if (previousPhase === GamePhase.RESULT && newPhase === GamePhase.NIGHT && data.lastPhaseResult.executedUserId && players.length > 0) {
           const executedPlayer = players.find(p => p.userId === data.lastPhaseResult!.executedUserId);
           if (executedPlayer) {
+            playVoteDeathSound();
             addVoteResultEvent(executedPlayer.username);
           }
         }
       }
+
+      // 이전 페이즈 업데이트
+      setPreviousPhase(newPhase);
 
       // 페이즈가 변경될 때마다 플레이어 정보 다시 로드 (생존 상태 업데이트)
       if (gameId) {
         loadPlayers(gameId);
       }
 
-      if (data.currentPhase === GamePhase.VOTE && gameId && data.dayCount) {
+      if (newPhase === GamePhase.VOTE && gameId && data.dayCount) {
         loadVoteStatus(gameId, data.dayCount);
       }
     },
@@ -200,6 +238,7 @@ export default function GamePage() {
         timer={timer}
         myRole={myRole.role as GameRole}
         myNickname={myNickname}
+        defendantUsername={gameState.defendantUserId ? players.find(p => p.userId === gameState.defendantUserId)?.username : undefined}
       />
 
       <GameChatPanel
@@ -208,6 +247,7 @@ export default function GamePage() {
         myUserId={myUserId}
         chatContainerRef={chatContainerRef}
         isCompact={expandedMode !== null}
+        deadPlayerIds={players.filter(p => !p.isAlive).map(p => p.userId!)}
       />
 
       <GameActionBar
@@ -238,6 +278,8 @@ export default function GamePage() {
         gameId={gameId}
         myUserId={myUserId}
         policeCheckTrigger={policeCheckTrigger}
+        defendantUserId={gameState.defendantUserId}
+        onFinalVote={handleFinalVote}
       />
     </div>
   );

@@ -10,6 +10,7 @@ interface GameChatPanelProps {
   myUserId: string;
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
   isCompact?: boolean;
+  deadPlayerIds?: string[];
 }
 
 type CombinedItem =
@@ -21,7 +22,8 @@ export function GameChatPanel({
   events,
   myUserId,
   chatContainerRef,
-  isCompact = false
+  isCompact = false,
+  deadPlayerIds = []
 }: GameChatPanelProps) {
   // 이벤트와 메시지를 시간순으로 합치기
   const combinedItems = useMemo<CombinedItem[]>(() => {
@@ -47,11 +49,13 @@ export function GameChatPanel({
             if (item.type === 'event') {
               return <EventMessage key={`event-${item.data.id}`} event={item.data} />;
             } else {
+              const isDeadPlayer = deadPlayerIds.includes(item.data.userId || '');
               return (
                 <ChatMessage
                   key={`msg-${item.data.id}`}
                   message={item.data}
                   isMyMessage={item.data.userId === myUserId}
+                  isDeadPlayer={isDeadPlayer}
                 />
               );
             }

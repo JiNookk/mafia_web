@@ -9,6 +9,7 @@ import { ChatInput } from './ChatInput';
 import { ActionButtons } from './ActionButtons';
 import { PlayerSelectGrid } from './PlayerSelectGrid';
 import { PoliceCheckResults } from './PoliceCheckResults';
+import { FinalVoteButtons } from './FinalVoteButtons';
 
 type ExpandedMode = 'vote' | 'ability' | 'memo' | null;
 
@@ -36,6 +37,8 @@ interface GameActionBarProps {
   gameId: string;
   myUserId: string;
   policeCheckTrigger?: number;
+  defendantUserId?: string;
+  onFinalVote?: () => void;
 }
 
 export function GameActionBar({
@@ -61,7 +64,9 @@ export function GameActionBar({
   myAbilityTargetId,
   gameId,
   myUserId,
-  policeCheckTrigger
+  policeCheckTrigger,
+  defendantUserId,
+  onFinalVote
 }: GameActionBarProps) {
   const isExpanded = expandedMode !== null;
   const [policeCheckResults, setPoliceCheckResults] = useState<CheckResult[]>([]);
@@ -89,6 +94,9 @@ export function GameActionBar({
     }
   }, [myRole, expandedMode, loadPoliceCheckResults, policeCheckTrigger]);
 
+  const defendantUsername = defendantUserId ? players.find(p => p.userId === defendantUserId)?.username : undefined;
+  const isDefendant = defendantUserId === myUserId;
+
   return (
     <div
       className={`bg-card border-t border-border/50 flex flex-col transition-all duration-300 ${
@@ -97,6 +105,16 @@ export function GameActionBar({
     >
       {/* 펼쳐진 상태: 헤더 */}
       {isExpanded && <ExpandedHeader expandedMode={expandedMode} onClose={onClose} />}
+
+      {/* RESULT 페이즈: 최종 투표 버튼 */}
+      {currentPhase === GamePhase.RESULT && defendantUsername && myIsAlive && (
+        <FinalVoteButtons
+          defendantUsername={defendantUsername}
+          isDefendant={isDefendant}
+          myVotedPlayerId={myVotedPlayerId}
+          onVoteExecute={onFinalVote || (() => {})}
+        />
+      )}
 
       {/* 채팅 입력 (항상 표시) */}
       <ChatInput
@@ -108,17 +126,19 @@ export function GameActionBar({
         currentChatType={currentChatType}
       />
 
-      {/* 액션 버튼 영역 (항상 표시) */}
-      <ActionButtons
-        currentPhase={currentPhase}
-        myRole={myRole}
-        myIsAlive={myIsAlive}
-        isExpanded={isExpanded}
-        expandedMode={expandedMode}
-        onOpenVote={onOpenVote}
-        onOpenMemo={onOpenMemo}
-        onOpenAbility={onOpenAbility}
-      />
+      {/* 액션 버튼 영역 (RESULT 페이즈가 아닐 때만 표시) */}
+      {currentPhase !== GamePhase.RESULT && (
+        <ActionButtons
+          currentPhase={currentPhase}
+          myRole={myRole}
+          myIsAlive={myIsAlive}
+          isExpanded={isExpanded}
+          expandedMode={expandedMode}
+          onOpenVote={onOpenVote}
+          onOpenMemo={onOpenMemo}
+          onOpenAbility={onOpenAbility}
+        />
+      )}
 
       {/* 펼쳐진 상태: 플레이어 그리드 (맨 아래) */}
       {isExpanded && (

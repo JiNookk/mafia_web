@@ -25,7 +25,7 @@ export function GameHeader({ gameState, timer, players }: GameHeaderProps) {
       case GamePhase.DEFENSE:
         return { icon: '🛡️', title: '최후 변론', color: 'text-destructive' };
       case GamePhase.RESULT:
-        return { icon: '🎯', title: '결과 발표', color: 'text-success' };
+        return { icon: '🎯', title: '최종 투표', color: 'text-success' };
       default:
         return { icon: '🌙', title: '대기 중', color: 'text-muted-foreground' };
     }

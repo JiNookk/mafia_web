@@ -6,9 +6,10 @@ interface SimpleGameHeaderProps {
   timer: number;
   myRole: GameRole;
   myNickname?: string;
+  defendantUsername?: string;
 }
 
-export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole, myNickname }: SimpleGameHeaderProps) {
+export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole, myNickname, defendantUsername }: SimpleGameHeaderProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -26,7 +27,7 @@ export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole, myNick
       case GamePhase.DEFENSE:
         return '변론';
       case GamePhase.RESULT:
-        return '결과';
+        return '최종 투표';
       default:
         return '대기';
     }
@@ -66,23 +67,33 @@ export function SimpleGameHeader({ dayCount, currentPhase, timer, myRole, myNick
   const roleInfo = getRoleInfo(myRole);
 
   return (
-    <div className="h-[10vh] bg-card border-b border-border/50 flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
-        <span className="text-lg font-bold">
-          {dayCount}일차
-        </span>
-        <span className={`text-base font-semibold ${getPhaseColor(currentPhase)}`}>
-          {getPhaseText(currentPhase)}
-        </span>
-        <div className="h-6 w-px bg-border/50" />
-        <span className={`text-base font-semibold ${roleInfo.color}`}>
-          {roleInfo.icon} {roleInfo.text}
-          {myNickname && <span className="text-muted-foreground ml-1">({myNickname})</span>}
-        </span>
+    <div className="h-[10vh] bg-card border-b border-border/50 flex flex-col justify-center px-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-lg font-bold">
+            {dayCount}일차
+          </span>
+          <span className={`text-base font-semibold ${getPhaseColor(currentPhase)}`}>
+            {getPhaseText(currentPhase)}
+          </span>
+          <div className="h-6 w-px bg-border/50" />
+          <span className={`text-base font-semibold ${roleInfo.color}`}>
+            {roleInfo.icon} {roleInfo.text}
+            {myNickname && <span className="text-muted-foreground ml-1">({myNickname})</span>}
+          </span>
+        </div>
+        <div className="text-2xl font-bold text-destructive">
+          {formatTime(timer)}
+        </div>
       </div>
-      <div className="text-2xl font-bold text-destructive">
-        {formatTime(timer)}
-      </div>
+
+      {/* 재판 대상자 표시 (DEFENSE/RESULT 페이즈) */}
+      {(currentPhase === GamePhase.DEFENSE || currentPhase === GamePhase.RESULT) && defendantUsername && (
+        <div className="mt-1 text-sm">
+          <span className="text-muted-foreground">재판 대상자:</span>
+          <span className="ml-2 font-bold text-destructive">{defendantUsername}</span>
+        </div>
+      )}
     </div>
   );
 }

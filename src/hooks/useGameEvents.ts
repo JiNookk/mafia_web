@@ -12,7 +12,8 @@ export function useGameEvents() {
   const addPhaseChangeEvent = useCallback((phase: GamePhase, dayCount: number) => {
     const phaseText = phase === GamePhase.NIGHT ? '밤' :
                       phase === GamePhase.DAY ? '낮' :
-                      phase === GamePhase.VOTE ? '투표' : '결과';
+                      phase === GamePhase.VOTE ? '투표' :
+                      phase === GamePhase.RESULT ? '최종 투표' : '결과';
 
     addEvent({
       id: `phase-${Date.now()}`,
@@ -40,7 +41,7 @@ export function useGameEvents() {
     });
   }, [addEvent]);
 
-  const addNightResultEvent = useCallback((deaths: string[] | undefined, playerNames?: Map<string, string>) => {
+  const addNightResultEvent = useCallback((deaths: string[] | undefined, playerNames?: Map<string, string>, wasSavedByDoctor?: boolean) => {
     if (deaths && deaths.length > 0) {
       // 죽은 사람들 표시
       deaths.forEach(userId => {
@@ -53,13 +54,24 @@ export function useGameEvents() {
         });
       });
     } else {
-      // 아무도 죽지 않음 (의사가 막았거나 공격 없음)
-      addEvent({
-        id: `night-result-${Date.now()}`,
-        type: 'info',
-        message: '어젯밤 아무도 죽지 않았습니다',
-        timestamp: new Date().toISOString()
-      });
+      // 아무도 죽지 않음
+      if (wasSavedByDoctor) {
+        // 의사가 마피아의 공격을 막았을 때
+        addEvent({
+          id: `night-result-${Date.now()}`,
+          type: 'info',
+          message: '어젯밤 의사가 마피아의 공격을 막았습니다',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // 공격이 없었을 때
+        addEvent({
+          id: `night-result-${Date.now()}`,
+          type: 'info',
+          message: '어젯밤 아무도 죽지 않았습니다',
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   }, [addEvent]);
 
