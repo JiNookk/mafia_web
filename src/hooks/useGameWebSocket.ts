@@ -36,7 +36,7 @@ const createMessageHandler = (handlers: WebSocketHandlers) => (event: MessageEve
   try {
     const message = JSON.parse(event.data);
 
-    if (message.type === 'PHASE_CHANGE' && message.data) {
+    if ((message.type === 'PHASE_CHANGE' || message.type === 'PHASE_CHANGED') && message.data) {
       handlers.onPhaseChangeRef.current(message.data);
     } else if (message.type === 'PLAYER_UPDATE' && message.data) {
       handlers.onPlayerUpdateRef.current(message.data);
@@ -85,7 +85,7 @@ export function useGameWebSocket({
     const isManualCloseRef = { current: false };
 
     // 연결할 웹소켓 채널 결정
-    const channels: string[] = ['all']; // 모든 플레이어는 게임 상태를 받기 위해 all 채널 필요
+    const channels: string[] = ['all', 'events']; // all: 채팅, events: 게임 이벤트 (페이즈 변경, 플레이어 사망 등)
 
     if (!myIsAlive) {
       channels.push('dead'); // 죽은 플레이어는 dead 채널 추가
