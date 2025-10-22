@@ -1,48 +1,20 @@
-export interface RoomSummary {
-  id: string;
-  name: string;
-  currentPlayers: number;
-  maxPlayers: number;
-  status: "AVAILABLE" | "IN_GAME" | "FULL";
-}
+import { components } from './api';
 
-export interface CreateRoomDto {
-  username: string;
-  roomName: string;
-}
+// API 스펙에서 타입 가져오기
+export type RoomListResponse = components['schemas']['RoomListResponse'];
+export type CreateRoomDto = components['schemas']['CreateRoomDto'];
+export type RoomMemberResponse = components['schemas']['RoomMemberResponse'];
+export type RoomDetailResponse = components['schemas']['RoomDetailResponse'];
+export type ChatMessageDto = components['schemas']['ChatMessageDto'];
+export type SendChatDto = components['schemas']['SendChatDto'];
 
-export interface RoomMemberResponse {
-  userId: string;
-  nickname: string;
-  role: 'HOST' | 'PARTICIPANT';
-}
+// RoomSummary는 RoomListResponse의 별칭
+export type RoomSummary = RoomListResponse;
 
-export interface RoomDetailResponse {
-  id: string;
-  name: string;
-  members: RoomMemberResponse[];
-  currentPlayers: number;
-  maxPlayers: number;
-}
-
+// ChatType enum (API 스펙의 값과 일치)
 export enum ChatType {
-  ALL = 'ALL',
-  MAFIA = 'MAFIA',
-  DEAD = 'DEAD'
-}
-
-export interface ChatMessageDto {
-  id: number;
-  roomId: string;
-  userId: string;
-  nickname: string;
-  chatType: ChatType;
-  message: string;
-  timestamp: string;
-}
-
-export interface SendChatDto {
-  userId: string;
-  chatType: ChatType;
-  message: string;
+  WAITING_ROOM = 'WAITING_ROOM',
+  GAME_ALL = 'GAME_ALL',
+  GAME_MAFIA = 'GAME_MAFIA',
+  GAME_DEAD = 'GAME_DEAD'
 }

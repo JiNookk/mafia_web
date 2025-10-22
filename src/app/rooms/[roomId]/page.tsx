@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { roomsService } from '@/services/rooms';
+import { gameService } from '@/services/game';
 import { RoomDetailResponse, ChatMessageDto, ChatType } from '@/types/room.type';
 
 export default function WaitingRoom() {
@@ -37,7 +38,7 @@ export default function WaitingRoom() {
 
         if (response.success && response.data) {
           setRoomDetail(response.data);
-          const hostMember = response.data.members.find(m => m.role === 'HOST');
+          const hostMember = response.data.members?.find(m => m.role === 'HOST');
           setIsHost(hostMember?.userId === myUserId);
         } else {
           console.error('Failed to load room detail:', response.error);
@@ -64,7 +65,7 @@ export default function WaitingRoom() {
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        const response = await roomsService.getChatHistory(roomId, myUserId, ChatType.ALL);
+        const response = await roomsService.getChatHistory(roomId, myUserId, ChatType.WAITING_ROOM);
         if (response.success && response.data) {
           setChatMessages(response.data);
         }
@@ -114,6 +115,13 @@ export default function WaitingRoom() {
           } else if (message.type === 'CHAT' && message.data) {
             // 채팅 메시지 추가
             setChatMessages(prev => [...prev, message.data]);
+          } else if (message.type === 'GAME_STARTED' && message.data) {
+            // 게임 시작 - 모든 멤버가 게임 페이지로 이동
+            const gameId = message.data.gameId;
+            if (gameId) {
+              console.log('Game started! Redirecting to game page...', gameId);
+              router.push(`/rooms/${roomId}/game/${gameId}`);
+            }
           }
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -168,13 +176,25 @@ export default function WaitingRoom() {
     }
   }, [chatMessages]);
 
-  const handleStartGame = () => {
-    if (!roomDetail || roomDetail.currentPlayers < 8) {
+  const handleStartGame = async () => {
+    if (!roomDetail || !roomDetail.currentPlayers || roomDetail.currentPlayers < 8) {
       toast.error('8명이 모여야 게임을 시작할 수 있습니다');
       return;
     }
-    // TODO: 게임 시작 API 호출
-    toast.info('게임 시작 기능은 준비 중입니다');
+
+    try {
+      const response = await gameService.startGame(roomId);
+
+      if (response.success && response.data) {
+        toast.success('게임이 시작되었습니다!');
+        router.push(`/rooms/${roomId}/game/${response.data.gameId}`);
+      } else {
+        toast.error(response.error || '게임 시작에 실패했습니다');
+      }
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      toast.error('네트워크 오류가 발생했습니다');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -183,14 +203,14 @@ export default function WaitingRoom() {
     console.log('Sending chat message:', {
       roomId,
       userId: myUserId,
-      chatType: ChatType.ALL,
+      chatType: ChatType.WAITING_ROOM,
       message: chatMessage.trim()
     });
 
     try {
       const response = await roomsService.sendChat(roomId, {
         userId: myUserId,
-        chatType: ChatType.ALL,
+        chatType: ChatType.WAITING_ROOM,
         message: chatMessage.trim()
       });
 
@@ -238,7 +258,7 @@ export default function WaitingRoom() {
     );
   }
 
-  const emptySlots = roomDetail.maxPlayers - roomDetail.currentPlayers;
+  const emptySlots = (roomDetail.maxPlayers || 0) - (roomDetail.currentPlayers || 0);
 
   return (
     <div className="mobile-container min-h-screen flex flex-col gradient-bg">
@@ -266,10 +286,12 @@ export default function WaitingRoom() {
         {/* 플레이어 목록 */}
         <div className="p-4">
           <div className="grid grid-cols-2 gap-3">
-            {roomDetail.members.map((member, index) => (
+            {roomDetail.members?.map((member, index) => (
               <div
                 key={member.userId}
-                className="bg-card/50 rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center relative animate-fade-in shadow-card"
+                className={`bg-card/50 rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center relative animate-fade-in shadow-card ${
+                  member.userId === myUserId ? 'ring-2 ring-primary' : ''
+                }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {member.role === 'HOST' && (
@@ -290,7 +312,7 @@ export default function WaitingRoom() {
               <div
                 key={`empty-${index}`}
                 className="border-2 border-dashed border-border/30 rounded-xl p-3 text-center min-h-[100px] flex items-center justify-center bg-transparent animate-fade-in"
-                style={{ animationDelay: `${(roomDetail.currentPlayers + index) * 0.1}s` }}
+                style={{ animationDelay: `${((roomDetail.currentPlayers || 0) + index) * 0.1}s` }}
               >
                 <div className="text-muted-foreground text-xs">대기중...</div>
               </div>

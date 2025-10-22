@@ -20,7 +20,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await authService.checkCurrent();
 
-        if (response.success) {
+        if (response.success && response.data) {
+          // currentRoom이 있으면 게임/방으로 리다이렉트
+          if (response.data.currentRoom) {
+            const { roomId, gameId } = response.data.currentRoom;
+            const targetPath = gameId
+              ? `/rooms/${roomId}/game/${gameId}`
+              : `/rooms/${roomId}`;
+
+            // 이미 목표 경로에 있지 않으면 리다이렉트
+            if (pathname !== targetPath) {
+              setIsChecking(false);
+              router.push(targetPath);
+              return;
+            }
+          }
           // 세션 유효 - 현재 페이지 유지
           setIsChecking(false);
         } else {

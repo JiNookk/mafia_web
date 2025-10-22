@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { roomsService } from '@/services/rooms';
 import { RoomSummary } from '@/types/room.type';
@@ -16,27 +16,12 @@ export default function LobbyPage() {
   const [newRoomTitle, setNewRoomTitle] = useState('');
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 세션 확인 및 방 목록 로드
+  // 방 목록 로드
   useEffect(() => {
-    checkCurrentSession();
     loadRooms();
   }, []);
-
-  const checkCurrentSession = async () => {
-    try {
-      const response = await authService.checkCurrent();
-
-      if (response.success && response.data) {
-        // roomId가 있으면 해당 방으로 이동
-        if (response.data.roomId) {
-          router.push(`/rooms/${response.data.roomId}`);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check current session:', error);
-    }
-  };
 
   const loadRooms = async () => {
     setIsLoading(true);
@@ -90,6 +75,13 @@ export default function LobbyPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadRooms();
+    setIsRefreshing(false);
+    toast.success('방 목록을 새로고침했습니다');
+  };
+
   const handleJoinRoom = async (room: RoomSummary) => {
     const username = localStorage.getItem('mafia_nickname');
     if (!username) {
@@ -99,7 +91,7 @@ export default function LobbyPage() {
     }
 
     try {
-      const response = await roomsService.joinRoom(room.id, username);
+      const response = await roomsService.joinRoom(room.id!, username);
 
       if (response.success && response.data) {
         toast.success('방에 참여했습니다');
@@ -129,9 +121,18 @@ export default function LobbyPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between p-4 border-b border-border/30">
         <h1 className="text-2xl font-bold text-primary">방 목록</h1>
-        <button className="p-2 hover:bg-card/50 rounded-lg transition-colors">
-          <Settings className="w-6 h-6 text-primary" />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 hover:bg-card/50 rounded-lg transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-6 h-6 text-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button className="p-2 hover:bg-card/50 rounded-lg transition-colors">
+            <Settings className="w-6 h-6 text-primary" />
+          </button>
+        </div>
       </div>
 
       {/* 방 목록 */}
@@ -175,11 +176,11 @@ export default function LobbyPage() {
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   room.status === 'AVAILABLE'
                     ? 'bg-secondary/20 text-secondary border border-secondary/30'
-                    : room.status === 'IN_GAME'
+                    : room.status === 'STARTED'
                     ? 'bg-primary/20 text-primary border border-primary/30'
                     : 'bg-muted-foreground/20 text-muted-foreground border border-muted-foreground/30'
                 }`}>
-                  {room.status === 'AVAILABLE' ? '대기중' : room.status === 'IN_GAME' ? '게임중' : '풀방'}
+                  {room.status === 'AVAILABLE' ? '대기중' : room.status === 'STARTED' ? '게임중' : '풀방'}
                 </span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
