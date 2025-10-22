@@ -92,7 +92,8 @@ export function GameActionBar({
     if (myRole === GameRole.POLICE && expandedMode === 'ability') {
       loadPoliceCheckResults();
     }
-  }, [myRole, expandedMode, loadPoliceCheckResults, policeCheckTrigger]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myRole, expandedMode, policeCheckTrigger]);
 
   const defendantUsername = defendantUserId ? players.find(p => p.userId === defendantUserId)?.username : undefined;
   const isDefendant = defendantUserId === myUserId;

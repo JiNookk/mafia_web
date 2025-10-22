@@ -422,6 +422,10 @@ export interface components {
             voteCount?: {
                 [key: string]: number;
             };
+            topVotedUserId?: string;
+            /** Format: int64 */
+            topVoteCount?: number;
+            hasMajority?: boolean;
         };
         CheckResult: {
             targetUserId?: string;

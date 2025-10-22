@@ -13,7 +13,8 @@ export function useGameEvents() {
     const phaseText = phase === GamePhase.NIGHT ? '밤' :
                       phase === GamePhase.DAY ? '낮' :
                       phase === GamePhase.VOTE ? '투표' :
-                      phase === GamePhase.RESULT ? '최종 투표' : '결과';
+                      phase === GamePhase.DEFENSE ? '변론' :
+                      phase === GamePhase.RESULT ? '최종 투표' : '알 수 없음';
 
     addEvent({
       id: `phase-${Date.now()}`,

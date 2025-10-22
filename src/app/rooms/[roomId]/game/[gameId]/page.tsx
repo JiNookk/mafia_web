@@ -16,6 +16,8 @@ import { useDeathSound } from '@/hooks/useDeathSound';
 import { SimpleGameHeader } from '@/components/game/SimpleGameHeader';
 import { GameChatPanel } from '@/components/game/GameChatPanel';
 import { GameActionBar } from '@/components/game/GameActionBar';
+import { FinalVoteModal } from '@/components/game/FinalVoteModal';
+import { GameResultModal } from '@/components/game/GameResultModal';
 
 export default function GamePage() {
   const params = useParams();
@@ -31,9 +33,12 @@ export default function GamePage() {
   const [myAbilityTargetId, setMyAbilityTargetId] = useState<string | null>(null);
   const [policeCheckTrigger, setPoliceCheckTrigger] = useState(0);
   const [previousPhase, setPreviousPhase] = useState<GamePhase | null>(null);
+  const [showFinalVoteModal, setShowFinalVoteModal] = useState(false);
+  const [showGameResultModal, setShowGameResultModal] = useState(false);
+  const [winnerTeam, setWinnerTeam] = useState<'CITIZEN' | 'MAFIA' | null>(null);
 
   // 커스텀 훅 사용
-  const { gameState, setGameState, myRole, players, setPlayers, loadPlayers, loadMyRole, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
+  const { gameState, setGameState, myRole, players, setPlayers, voteStatus, loadPlayers, loadMyRole, loadVoteStatus, isLoading } = useGameState(roomId, myUserId, gameId);
   const { memos, saveMemo, getMemo, addPoliceCheckMemo, loadPoliceCheckResults, isLocked } = usePlayerMemo(gameId);
   const { events, addPhaseChangeEvent, addDeathEvent, addActionEvent, addNightResultEvent, addVoteResultEvent, addPoliceCheckResultEvent } = useGameEvents();
   const { currentChatType, canChat } = useChatPermission({ myRole, currentPhase: gameState?.currentPhase as GamePhase | undefined });
@@ -60,18 +65,20 @@ export default function GamePage() {
   };
 
   const handleFinalVote = async () => {
-    if (!gameState?.gameId || !gameState.defendantUserId) return;
+    const defendantUserId = voteStatus?.topVotedUserId;
+    if (!gameState?.gameId || !defendantUserId) return;
 
     try {
       const response = await gameService.registerAction(gameState.gameId, {
         type: ActionType.FINAL_VOTE,
-        targetUserId: gameState.defendantUserId,
+        targetUserId: defendantUserId,
         actorUserId: myUserId
       });
 
       if (response.success) {
-        setMyVotedPlayerId(gameState.defendantUserId);
-        addActionEvent('처형에 투표', '했습니다');
+        setMyVotedPlayerId(defendantUserId);
+        const defendantUsername = players.find(p => p.userId === defendantUserId)?.username || '알 수 없음';
+        addActionEvent(defendantUsername, '처형에 투표했습니다');
       }
     } catch (error) {
       console.error('Failed to register final vote:', error);
@@ -90,7 +97,8 @@ export default function GamePage() {
         }
       });
     }
-  }, [myRole?.role, gameState?.gameId, myUserId, loadPoliceCheckResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myRole?.role, gameState?.gameId, myUserId]);
 
   useGameWebSocket({
     gameId,
@@ -98,6 +106,13 @@ export default function GamePage() {
     myIsAlive: myRole?.isAlive || false,
     gameState,
     onGameEnd: (data) => {
+      // 게임 결과 모달 표시
+      if (data.winnerTeam) {
+        setWinnerTeam(data.winnerTeam as 'CITIZEN' | 'MAFIA');
+        setShowGameResultModal(true);
+      }
+
+      // 3초 후 방으로 리다이렉트
       setTimeout(() => {
         router.push(`/rooms/${roomId}`);
       }, 3000);
@@ -119,6 +134,34 @@ export default function GamePage() {
       }
       if (expandedMode === 'ability' && newPhase !== GamePhase.NIGHT) {
         setExpandedMode(null);
+      }
+
+      // VOTE 페이즈에서 투표 상태 로드 (topVotedUserId를 얻기 위해)
+      if (newPhase === GamePhase.VOTE && gameId && data.dayCount) {
+        loadVoteStatus(gameId, data.dayCount);
+      }
+
+      // RESULT 페이즈 시작 시 최종 투표 모달 표시 (재판 대상자가 아닌 경우만)
+      if (newPhase === GamePhase.RESULT) {
+        const defendantUserId = voteStatus?.topVotedUserId;
+        console.log('🔍 Phase change debug (RESULT):', {
+          newPhase,
+          defendantUserId,
+          myUserId,
+          myIsAlive: myRole?.isAlive,
+          isDefendant: defendantUserId === myUserId,
+          voteStatus
+        });
+
+        if (defendantUserId && defendantUserId !== myUserId && myRole?.isAlive) {
+          console.log('✅ Opening final vote modal');
+          setShowFinalVoteModal(true);
+        }
+      }
+
+      // RESULT 페이즈가 아니면 모달 닫기
+      if (newPhase !== GamePhase.RESULT) {
+        setShowFinalVoteModal(false);
       }
 
       // 페이즈 결과 처리
@@ -175,10 +218,6 @@ export default function GamePage() {
       // 페이즈가 변경될 때마다 플레이어 정보 다시 로드 (생존 상태 업데이트)
       if (gameId) {
         loadPlayers(gameId);
-      }
-
-      if (newPhase === GamePhase.VOTE && gameId && data.dayCount) {
-        loadVoteStatus(gameId, data.dayCount);
       }
     },
     onPlayerUpdate: (data) => {
@@ -238,7 +277,7 @@ export default function GamePage() {
         timer={timer}
         myRole={myRole.role as GameRole}
         myNickname={myNickname}
-        defendantUsername={gameState.defendantUserId ? players.find(p => p.userId === gameState.defendantUserId)?.username : undefined}
+        defendantUsername={voteStatus?.topVotedUserId ? players.find(p => p.userId === voteStatus.topVotedUserId)?.username : undefined}
       />
 
       <GameChatPanel
@@ -278,8 +317,36 @@ export default function GamePage() {
         gameId={gameId}
         myUserId={myUserId}
         policeCheckTrigger={policeCheckTrigger}
-        defendantUserId={gameState.defendantUserId}
+        defendantUserId={voteStatus?.topVotedUserId}
         onFinalVote={handleFinalVote}
+      />
+
+      <FinalVoteModal
+        isOpen={showFinalVoteModal}
+        defendantUsername={(() => {
+          const defendantUserId = voteStatus?.topVotedUserId;
+          const username = defendantUserId ? players.find(p => p.userId === defendantUserId)?.username || '알 수 없음' : '';
+          console.log('👤 Defendant username lookup:', {
+            defendantUserId,
+            playersCount: players.length,
+            players: players.map(p => ({ userId: p.userId, username: p.username })),
+            foundUsername: username
+          });
+          return username;
+        })()}
+        isDefendant={voteStatus?.topVotedUserId === myUserId}
+        myVotedPlayerId={myVotedPlayerId}
+        onVoteExecute={handleFinalVote}
+        onClose={() => {
+          console.log('🚪 Closing modal');
+          setShowFinalVoteModal(false);
+        }}
+      />
+
+      <GameResultModal
+        isOpen={showGameResultModal}
+        winnerTeam={winnerTeam}
+        onClose={() => setShowGameResultModal(false)}
       />
     </div>
   );
