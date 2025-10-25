@@ -68,7 +68,6 @@ export function useGameWebSocket({
   gameId,
   myRole,
   myIsAlive,
-  gameState,
   onPhaseChange,
   onPlayerUpdate,
   onChatMessage,
@@ -138,8 +137,8 @@ export function useGameWebSocket({
       };
 
       ws.onmessage = createMessageHandler(handlers);
-      ws.onerror = (error) => console.error(`WebSocket [${channel}] error:`, error);
-      ws.onclose = (event: CloseEvent) => {
+      ws.onerror = () => console.error(`WebSocket [${channel}] error`);
+      ws.onclose = () => {
         if (!isManualCloseRef.current && reconnectAttemptsRefs.current[channel] < maxReconnectAttempts) {
           reconnectAttemptsRefs.current[channel]++;
           const delay = getReconnectDelay(reconnectAttemptsRefs.current[channel]);

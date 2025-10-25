@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Settings, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { roomsService } from '@/services/rooms';
 import { RoomSummary } from '@/types/room.type';
-import { authService } from '@/services/auth';
 
 export default function LobbyPage() {
   const router = useRouter();

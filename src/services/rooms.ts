@@ -8,11 +8,11 @@ export class RoomsService {
   }
 
   async createRoom(data: CreateRoomDto): Promise<ApiResponse<RoomDetailResponse>> {
-    return apiClient.post<RoomDetailResponse>("/rooms", data);
+    return apiClient.post<RoomDetailResponse, CreateRoomDto>("/rooms", data);
   }
 
   async joinRoom(roomId: string, username: string): Promise<ApiResponse<RoomDetailResponse>> {
-    return apiClient.post<RoomDetailResponse>(`/rooms/${roomId}/join`, { username, roomId });
+    return apiClient.post<RoomDetailResponse, { username: string; roomId: string }>(`/rooms/${roomId}/join`, { username, roomId });
   }
 
   async getRoomDetail(roomId: string): Promise<ApiResponse<RoomDetailResponse>> {
@@ -20,7 +20,7 @@ export class RoomsService {
   }
 
   async leaveRoom(roomId: string, userId: string): Promise<ApiResponse<void>> {
-    return apiClient.post<void>(`/rooms/${roomId}/leave`, { userId });
+    return apiClient.post<void, { userId: string }>(`/rooms/${roomId}/leave`, { userId });
   }
 
   async getChatHistory(roomId: string, userId: string, chatType: ChatType, limit: number = 50): Promise<ApiResponse<ChatMessageDto[]>> {
@@ -28,7 +28,7 @@ export class RoomsService {
   }
 
   async sendChat(roomId: string, data: SendChatDto): Promise<ApiResponse<ChatMessageDto>> {
-    return apiClient.post<ChatMessageDto>(`/rooms/${roomId}/chat`, data);
+    return apiClient.post<ChatMessageDto, SendChatDto>(`/rooms/${roomId}/chat`, data);
   }
 }
 

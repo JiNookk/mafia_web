@@ -16,7 +16,7 @@ export class GameService {
    * POST /api/rooms/{roomId}/games/start
    */
   async startGame(roomId: string): Promise<ApiResponse<GameStateResponse>> {
-    return apiClient.post<GameStateResponse>(`/rooms/${roomId}/games/start`, {});
+    return apiClient.post<GameStateResponse, Record<string, never>>(`/rooms/${roomId}/games/start`, {});
   }
 
   /**
@@ -48,7 +48,7 @@ export class GameService {
    * POST /api/games/{gameId}/actions
    */
   async registerAction(gameId: string, data: RegisterActionDto): Promise<ApiResponse<void>> {
-    return apiClient.post<void>(`/games/${gameId}/actions`, data);
+    return apiClient.post<void, RegisterActionDto>(`/games/${gameId}/actions`, data);
   }
 
   /**
@@ -64,7 +64,7 @@ export class GameService {
    * POST /api/games/{gameId}/next-phase
    */
   async nextPhase(gameId: string): Promise<ApiResponse<NextPhaseResponse>> {
-    return apiClient.post<NextPhaseResponse>(`/games/${gameId}/next-phase`, {});
+    return apiClient.post<NextPhaseResponse, Record<string, never>>(`/games/${gameId}/next-phase`, {});
   }
 
   /**
@@ -72,7 +72,7 @@ export class GameService {
    * POST /api/games/{gameId}/chat/{chatType}
    */
   async sendGameChat(gameId: string, chatType: string, data: SendChatDto): Promise<ApiResponse<ChatMessageDto>> {
-    return apiClient.post<ChatMessageDto>(`/games/${gameId}/chat/${chatType}`, data);
+    return apiClient.post<ChatMessageDto, SendChatDto>(`/games/${gameId}/chat/${chatType}`, data);
   }
 
   /**

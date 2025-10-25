@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { gameService } from '@/services/game';
-import { roomsService } from '@/services/rooms';
 import {
   GameStateResponse,
   MyRoleResponse,

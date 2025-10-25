@@ -13,7 +13,6 @@ export function PlayerGrid({
   players,
   selectedPlayer,
   currentPhase,
-  myIsAlive,
   onPlayerClick
 }: PlayerGridProps) {
   return (

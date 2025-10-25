@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { GamePhase, GameRole, CheckResult } from '@/types/game.type';
+import { useEffect, useCallback } from 'react';
+import { GamePhase, GameRole } from '@/types/game.type';
 import { ChatType } from '@/types/room.type';
 import { PlayerWithVotes } from '@/hooks/useGameState';
 import { gameService } from '@/services/game';
@@ -8,7 +8,6 @@ import { ExpandedHeader } from './ExpandedHeader';
 import { ChatInput } from './ChatInput';
 import { ActionButtons } from './ActionButtons';
 import { PlayerSelectGrid } from './PlayerSelectGrid';
-import { PoliceCheckResults } from './PoliceCheckResults';
 import { FinalVoteButtons } from './FinalVoteButtons';
 
 type ExpandedMode = 'vote' | 'ability' | 'memo' | null;
@@ -69,7 +68,6 @@ export function GameActionBar({
   onFinalVote
 }: GameActionBarProps) {
   const isExpanded = expandedMode !== null;
-  const [policeCheckResults, setPoliceCheckResults] = useState<CheckResult[]>([]);
 
   // 경찰 조사 결과 로드 함수
   const loadPoliceCheckResults = useCallback(() => {
@@ -78,7 +76,6 @@ export function GameActionBar({
       console.log('🔍 경찰 조사 결과 응답:', response);
       if (response.success && response.data?.results) {
         console.log('🔍 조사 결과:', response.data.results);
-        setPoliceCheckResults(response.data.results);
       } else {
         console.log('🔍 조사 결과 없음 또는 실패:', response);
       }

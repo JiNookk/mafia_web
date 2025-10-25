@@ -14,7 +14,6 @@ export default function WaitingRoom() {
   const router = useRouter();
   const params = useParams();
   const roomId = params.roomId as string;
-  const myNickname = typeof window !== 'undefined' ? localStorage.getItem('mafia_nickname') || 'Player' : 'Player';
   const myUserId = typeof window !== 'undefined' ? localStorage.getItem('mafia_session_id') || '' : '';
 
   const [roomDetail, setRoomDetail] = useState<RoomDetailResponse | null>(null);
@@ -110,7 +109,7 @@ export default function WaitingRoom() {
           if (message.type === 'ROOM_UPDATE' && message.data) {
             // 방 정보 업데이트
             setRoomDetail(message.data);
-            const hostMember = message.data.members.find((m: any) => m.role === 'HOST');
+            const hostMember = message.data.members.find((m: { role: string; userId: string }) => m.role === 'HOST');
             setIsHost(hostMember?.userId === myUserId);
           } else if (message.type === 'CHAT' && message.data) {
             // 채팅 메시지 추가

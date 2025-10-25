@@ -23,12 +23,22 @@ export interface SessionRequestDto {
   userId: string;
 }
 
+export interface SessionResponse {
+  valid: boolean;
+  userId?: string;
+  nickname?: string;
+}
+
+export interface LogoutResponse {
+  success: boolean;
+}
+
 export class AuthService {
   /**
    * 회원가입 (세션 등록)
    */
   async signup(nickname: string): Promise<ApiResponse<SignupResponse>> {
-    return apiClient.post<SignupResponse>("/auth/signup", { nickname });
+    return apiClient.post<SignupResponse, { nickname: string }>("/auth/signup", { nickname });
   }
 
   /**
@@ -39,21 +49,21 @@ export class AuthService {
     if (!userId) {
       return { success: false, error: 'No session found' };
     }
-    return apiClient.post<CurrentSessionResponse>("/auth/current", { userId });
+    return apiClient.post<CurrentSessionResponse, { userId: string }>("/auth/current", { userId });
   }
 
   /**
    * 세션 확인
    */
-  async checkSession(sessionId: string): Promise<ApiResponse<any>> {
-    return apiClient.get(`/auth/session/${sessionId}`);
+  async checkSession(sessionId: string): Promise<ApiResponse<SessionResponse>> {
+    return apiClient.get<SessionResponse>(`/auth/session/${sessionId}`);
   }
 
   /**
    * 로그아웃 (세션 삭제)
    */
-  async logout(sessionId: string): Promise<ApiResponse<any>> {
-    return apiClient.delete(`/auth/session/${sessionId}`);
+  async logout(sessionId: string): Promise<ApiResponse<LogoutResponse>> {
+    return apiClient.delete<LogoutResponse>(`/auth/session/${sessionId}`);
   }
 }
 

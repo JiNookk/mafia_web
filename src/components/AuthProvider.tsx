@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // 세션 무효 (401) - entry로 리다이렉트
           router.push('/entry');
         }
-      } catch (error) {
+      } catch {
         // 에러 발생 시에도 entry로 리다이렉트
         router.push('/entry');
       }
