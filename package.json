@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run generate-types && next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "npm run generate-types:local && next dev --turbopack",
+    "build": "npm run generate-types:prod && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -13,8 +13,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "generate-types": "openapi-typescript ${API_URL}/api-docs -o src/types/api.ts",
-    "prebuild": "npm run generate-types"
+    "generate-types:local": "openapi-typescript http://localhost:8080/api-docs -o src/types/api.ts",
+    "generate-types:prod": "openapi-typescript https://mafia-server.click/api-docs -o src/types/api.ts"
+    
   },
   "dependencies": {
     "axios": "^1.12.2",
