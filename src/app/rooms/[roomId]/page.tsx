@@ -166,7 +166,7 @@ export default function WaitingRoom() {
         wsRef.current.close();
       }
     };
-  }, [roomId, myUserId]);
+  }, [roomId, myUserId, router]);
 
   // 채팅 스크롤 자동 이동
   useEffect(() => {
