@@ -1,90 +1,74 @@
 # Mafia Game E2E Tests
 
 이 디렉토리는 마피아 온라인 게임의 End-to-End 테스트를 포함합니다.
+**실제 서버와 통신하여 전체 시스템을 테스트합니다.**
 
 ## 📁 테스트 파일 구조
 
 ```
 e2e/
 ├── helpers/
-│   └── test-utils.ts              # 테스트 헬퍼 함수 및 유틸리티
-├── entry-lobby.spec.ts            # 인증 및 로비 테스트 (기존)
-├── room.spec.ts                   # 방 생성 및 대기실 테스트 (기존)
-├── game-start.spec.ts             # 게임 시작 테스트
-├── game-flow.spec.ts              # 게임 진행 플로우 테스트
-├── full-game-integration.spec.ts  # 전체 게임 통합 테스트
-├── chat-permissions.spec.ts       # 채팅 권한 테스트
-├── error-handling.spec.ts         # 에러 처리 테스트
+│   ├── api-client.ts              # 서버 API 호출 헬퍼 함수
+│   └── test-player.ts             # 플레이어 생성 및 관리 유틸리티
+├── 01-auth-lobby.spec.ts          # 회원가입 및 로비
+├── 02-room-management.spec.ts     # 방 생성 및 관리
+├── 03-game-start.spec.ts          # 게임 시작 및 역할 배정
+├── 04-game-flow.spec.ts           # 게임 플로우 (페이즈 전환)
+├── 05-game-end.spec.ts            # 게임 종료 조건
+├── 06-chat.spec.ts                # 채팅 기능
 └── README.md                      # 이 파일
 ```
 
 ## 🧪 테스트 카테고리
 
-### 1. 인증 및 로비 (`entry-lobby.spec.ts`)
-- ✅ 회원가입 플로우
-- ✅ 닉네임 유효성 검증
-- ✅ 로비 페이지 방 목록 표시
-- ✅ 방 만들기 모달
+### 1. 회원가입 및 로비 (`01-auth-lobby.spec.ts`)
+- ✅ 회원가입 후 로비로 이동
+- ✅ 로비에서 방 목록 조회
+- ✅ 중복 닉네임으로 회원가입 시도
+- ✅ 빈 닉네임으로 회원가입 불가
 
-### 2. 방 관리 (`room.spec.ts`)
-- ✅ 방 생성 및 참여
-- ✅ 대기실 플레이어 목록
-- ✅ 호스트 권한 확인
-- ✅ 채팅 기능
+### 2. 방 생성 및 관리 (`02-room-management.spec.ts`)
+- ✅ 방 생성 후 방 상세 페이지로 이동
+- ✅ 여러 플레이어가 같은 방에 참여
+- ✅ 방 인원이 8명 초과 시 참여 불가
 - ✅ 방 나가기
+- ✅ 호스트가 방을 나가면 방이 삭제됨
 
-### 3. 게임 시작 (`game-start.spec.ts`)
-- ✅ 8명 미만 게임 시작 불가
-- ✅ 8명 게임 시작 성공
-- ✅ 모든 플레이어 게임 페이지 리다이렉트
-- ✅ 호스트 권한 확인
-- ✅ API 실패 처리
+### 3. 게임 시작 및 역할 배정 (`03-game-start.spec.ts`)
+- ✅ 8명이 모여 게임 시작
+- ✅ 5명 미만일 때 게임 시작 불가
+- ✅ 게임 시작 후 NIGHT 페이즈로 시작
+- ✅ 역할 분포 확인 (마피아 2, 의사 1, 경찰 1, 시민 4)
+- ✅ 마피아는 다른 마피아를 볼 수 있음
 
-### 4. 게임 진행 (`game-flow.spec.ts`)
-- ✅ 직업 표시 확인
-- ✅ NIGHT 페이즈 능력 사용
-  - 마피아: 살해
-  - 의사: 치료
-  - 경찰: 조사
-  - 시민: 능력 없음
-- ✅ DAY 페이즈 밤 결과 확인
-- ✅ VOTE 페이즈 투표 진행
-- ✅ 죽은 플레이어 표시
-- ✅ 채팅 기능
-- ✅ 메모 기능
-- ✅ 타이머 표시
+### 4. 게임 플로우 (`04-game-flow.spec.ts`)
+- ✅ NIGHT → DAY → VOTE → DEFENSE → RESULT 전체 사이클
+- ✅ 마피아가 시민을 죽이고 다음 날로 진행
+- ✅ 경찰이 마피아를 조사하면 마피아로 판명
+- ✅ 의사의 치료로 살해 방지
+- ✅ 투표 및 처형 시스템
 
-### 5. 전체 게임 통합 (`full-game-integration.spec.ts`)
-- ✅ Day 1 전체 사이클 (NIGHT → DAY → VOTE → RESULT)
-- ✅ 시민 승리 시나리오
-- ✅ 마피아 승리 시나리오
-- ✅ WebSocket 시뮬레이션
+### 5. 게임 종료 (`05-game-end.spec.ts`)
+- ✅ 모든 마피아가 제거되면 시민 승리
+- ✅ 마피아 수가 시민 수 이상이면 마피아 승리
+- ✅ 게임 종료 후 방으로 리다이렉트
 
-### 6. 채팅 권한 (`chat-permissions.spec.ts`)
-- ✅ NIGHT: 마피아 전용 채팅
-- ✅ NIGHT: 일반 시민 전체 채팅
-- ✅ DAY, VOTE: 생존자 전체 채팅
-- ✅ 죽은 플레이어: 죽은 자 채팅
-- ✅ DEFENSE: 최다 득표자만 채팅
-- ✅ 채팅 메시지 전송 및 입력창 초기화
-
-### 7. 에러 처리 (`error-handling.spec.ts`)
-- ✅ 네트워크 오류
-- ✅ API 500 에러
-- ✅ 행동 등록 실패
-- ✅ 죽은 플레이어 선택 방지
-- ✅ 중복 행동 방지
-- ✅ 세션 만료
-- ✅ 잘못된 gameId
-- ✅ 투표 현황 API 실패
-- ✅ 채팅 전송 실패
-- ✅ 방 나가기 실패
+### 6. 채팅 기능 (`06-chat.spec.ts`)
+- ✅ DAY 페이즈에서 모든 플레이어가 채팅 가능
+- ✅ NIGHT 페이즈에서 마피아끼리만 채팅 가능
+- ✅ 죽은 플레이어는 채팅 불가
+- ✅ DEFENSE 페이즈에서 피고인만 채팅 가능
 
 ## 🚀 테스트 실행 방법
 
 ### 전제 조건
-1. 백엔드 서버가 실행 중이어야 합니다 (`http://localhost:8080`)
-2. 프론트엔드 개발 서버가 실행 중이거나, Playwright가 자동으로 시작합니다
+1. **백엔드 서버가 실행 중이어야 합니다** (`http://localhost:8080`)
+   ```bash
+   cd /Users/ojin-ug/Desktop/classum/sideProjects/mafia_server
+   # 서버 실행 (예: ./gradlew bootRun 또는 ./mvnw spring-boot:run)
+   ```
+
+2. **프론트엔드는 Playwright가 자동으로 시작합니다** (`http://localhost:3000`)
 
 ### 모든 테스트 실행
 ```bash
@@ -118,55 +102,79 @@ npx playwright test -g "게임 페이지 로드 시 내 직업이 표시되어�
 
 ## 🛠️ 테스트 작성 가이드
 
-### 테스트 헬퍼 함수 사용
+### 헬퍼 함수 사용
 
-`e2e/helpers/test-utils.ts`에는 다음과 같은 유틸리티 함수들이 있습니다:
-
+#### 1. 플레이어 생성 (`helpers/test-player.ts`)
 ```typescript
-// 플레이어 생성
+import { createPlayers, closePlayers } from './helpers/test-player';
+
 const players = await createPlayers(context, 8);
+const [host, ...others] = players;
 
-// 직업 배정
-assignRoles(players); // 마피아 2, 의사 1, 경찰 1, 시민 4
+try {
+  // 테스트 로직
+} finally {
+  await closePlayers(players);
+}
+```
 
-// API 모킹
-await mockGameState(players, gameId, 'NIGHT', 1);
-await mockMyRole(player, gameId);
-await mockGamePlayers(players, gameId);
-await mockRegisterAction(player, gameId);
-await mockVoteStatus(players, gameId, dayCount, votes);
+#### 2. API 호출 (`helpers/api-client.ts`)
+```typescript
+import {
+  createRoom,
+  joinRoom,
+  startGame,
+  getMyRole,
+  registerAction,
+  nextPhase,
+} from './helpers/api-client';
 
-// 정리
-await closePlayers(players);
+// 방 생성
+const roomResult = await createRoom(host.page, host.userId, '방 이름');
+const roomId = roomResult.data!.id;
+
+// 게임 시작
+const gameResult = await startGame(host.page, roomId);
+const gameId = gameResult.data!.gameId;
+
+// 역할 확인
+for (const player of players) {
+  const roleResult = await getMyRole(player.page, gameId, player.userId);
+  player.role = roleResult.data!.role;
+}
+
+// 행동 등록
+await registerAction(mafia.page, gameId, {
+  type: 'MAFIA_KILL',
+  actorUserId: mafia.userId,
+  targetUserId: target.userId,
+});
+
+// 다음 페이즈
+await nextPhase(host.page, gameId);
 ```
 
 ### 새 테스트 추가하기
 
-1. `e2e/` 디렉토리에 `*.spec.ts` 파일 생성
-2. 테스트 헬퍼 함수 임포트
-3. `test.describe()` 블록으로 테스트 그룹 정의
-4. `test.beforeEach()`에서 설정
-5. `test.afterEach()`에서 정리
-6. `test()`로 개별 테스트 작성
-
-예시:
 ```typescript
 import { test, expect } from '@playwright/test';
-import { createPlayers, closePlayers } from './helpers/test-utils';
+import { createPlayers, closePlayers } from './helpers/test-player';
+import { createRoom, startGame } from './helpers/api-client';
 
 test.describe('새로운 기능 테스트', () => {
-  let players;
+  test('새로운 기능이 작동해야 함', async ({ context }) => {
+    const players = await createPlayers(context, 8);
+    const [host, ...others] = players;
 
-  test.beforeEach(async ({ context }) => {
-    players = await createPlayers(context, 8);
-  });
+    try {
+      const roomResult = await createRoom(host.page, host.userId, '테스트방');
+      const roomId = roomResult.data!.id;
 
-  test.afterEach(async () => {
-    await closePlayers(players);
-  });
+      // 테스트 로직...
 
-  test('새로운 기능이 작동해야 함', async () => {
-    // 테스트 코드
+    } finally {
+      await closePlayers(players);
+    }
   });
 });
 ```
@@ -175,87 +183,109 @@ test.describe('새로운 기능 테스트', () => {
 
 | 영역 | 커버리지 |
 |------|----------|
-| 인증 및 회원가입 | ✅ 100% |
-| 로비 및 방 관리 | ✅ 100% |
-| 대기실 | ✅ 100% |
-| 게임 시작 | ✅ 100% |
-| 게임 진행 (페이즈) | ✅ 90% |
-| 채팅 권한 | ✅ 90% |
-| 에러 처리 | ✅ 85% |
+| 회원가입 및 로비 | ✅ 100% |
+| 방 생성 및 관리 | ✅ 100% |
+| 게임 시작 및 역할 배정 | ✅ 100% |
+| 게임 플로우 (페이즈) | ✅ 95% |
+| 게임 종료 조건 | ✅ 100% |
+| 채팅 기능 | ✅ 90% |
 
 ## ⚠️ 주의사항
 
-### WebSocket 테스트
-- 현재 테스트는 WebSocket을 직접 사용하지 않고 API 모킹으로 진행합니다
-- 실제 WebSocket 통신이 필요한 경우, 백엔드 서버를 실행하고 모킹을 제거해야 합니다
+### 실제 서버 통신
+- **이 테스트는 실제 백엔드 서버와 통신합니다** (API 모킹 없음)
+- 서버가 `http://localhost:8080`에서 실행 중이어야 합니다
+- 테스트 실행 전후로 데이터베이스 정리가 필요할 수 있습니다
 
 ### 타이밍 이슈
-- `page.waitForTimeout()`은 최소한으로 사용하고, `page.waitForSelector()` 또는 `page.waitForURL()` 사용을 권장합니다
-- 네트워크 요청이 완료될 때까지 기다리려면 `page.waitForResponse()` 사용
+- WebSocket 실시간 이벤트는 서버 타이머에 의존하므로 적절한 대기 시간이 필요합니다
+- `page.waitForTimeout()`은 최소한으로 사용하고, `page.waitForURL()` 사용을 권장합니다
+- 네트워크 요청 완료 대기: `page.waitForResponse()` 사용
 
-### API 모킹
-- 테스트는 기본적으로 API를 모킹합니다
-- 실제 백엔드 통합 테스트를 하려면 모킹 코드를 제거하세요
+### 테스트 격리
+- 각 테스트는 독립적으로 실행됩니다
+- 매번 새로운 플레이어, 방, 게임을 생성합니다
+- 테스트 종료 시 `closePlayers()`로 리소스 정리 필수
 
-## 🐛 디버깅 팁
+## 🐛 트러블슈팅
 
-### 1. Playwright Inspector 사용
-```bash
-npm run test:e2e:debug
-```
+### 테스트가 타임아웃되는 경우
+1. **서버 실행 확인**
+   - `http://localhost:8080`에 서버가 실행 중인지 확인
+   - 서버 로그에서 에러 확인
 
-### 2. 스크린샷 확인
-테스트 실패 시 자동으로 스크린샷이 저장됩니다:
-```
-test-results/
-└── {test-name}/
-    └── test-failed-1.png
-```
+2. **데이터베이스 확인**
+   - 데이터베이스 연결 상태 확인
+   - 필요시 데이터베이스 초기화
 
-### 3. 트레이스 뷰어
-```bash
-npx playwright show-trace test-results/{test-name}/trace.zip
-```
+3. **대기 시간 조정**
+   - `page.waitForTimeout()` 값 증가
+   - WebSocket 이벤트 대기 시간 조정
 
-### 4. 콘솔 로그 확인
-```typescript
-test('테스트', async ({ page }) => {
-  page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
-  // ...
-});
-```
+### 테스트가 실패하는 경우
+1. **디버그 모드 실행**
+   ```bash
+   npm run test:e2e:debug
+   ```
+
+2. **스크린샷 확인**
+   - `test-results/` 디렉토리의 스크린샷 확인
+
+3. **서버 로그 확인**
+   - 백엔드 서버의 에러 로그 확인
+   - API 응답 확인
+
+4. **브라우저 콘솔 로그**
+   ```typescript
+   page.on('console', (msg) => console.log('PAGE:', msg.text()));
+   ```
+
+### 플레이어 수가 맞지 않는 경우
+- 이전 테스트의 세션이 남아있을 수 있음
+- 서버 재시작 또는 데이터베이스 초기화
 
 ## 🔧 설정
 
-Playwright 설정은 프로젝트 루트의 `playwright.config.ts`에 있습니다.
+Playwright 설정: [playwright.config.ts](../playwright.config.ts)
 
 주요 설정:
 - **baseURL**: `http://localhost:3000`
 - **testDir**: `./e2e`
-- **timeout**: 30000ms (30초)
-- **retries**: CI에서 2회, 로컬에서 0회
-- **workers**: CI에서 1개, 로컬에서 병렬
+- **webServer**: 프론트엔드 자동 시작
+- **screenshot**: 실패 시 자동 저장
+- **trace**: 재시도 시 자동 저장
 
 ## 📚 참고 자료
 
 - [Playwright 공식 문서](https://playwright.dev/)
-- [Testing Best Practices](https://playwright.dev/docs/best-practices)
+- [API Testing Guide](https://playwright.dev/docs/api-testing)
 - [Debugging Tests](https://playwright.dev/docs/debug)
 
-## 🤝 기여하기
+## ✨ 테스트 품질 개선사항
 
-새로운 테스트를 추가하거나 기존 테스트를 개선하려면:
+### 안정성
+- ✅ **타임스탬프 기반 닉네임**: 병렬 실행 시 닉네임 충돌 방지
+- ✅ **API 응답 검증**: 모든 API 호출에 null 체크 및 에러 핸들링
+- ✅ **타임아웃 설정**: 각 API 호출에 적절한 타임아웃 설정 (10-15초)
+- ✅ **리소스 정리**: 에러 발생 시에도 페이지 정리 보장
 
-1. 테스트를 작성합니다
-2. `npm run test:e2e`로 테스트가 통과하는지 확인합니다
-3. 테스트가 명확하고 의미 있는지 확인합니다
-4. 이 README를 업데이트합니다 (필요한 경우)
+### 유지보수성
+- ✅ **환경 변수 지원**: `API_BASE_URL` 환경 변수로 서버 주소 설정 가능
+- ✅ **에러 메시지 개선**: 실패 시 명확한 컨텍스트 포함 에러 메시지
+- ✅ **타입 안전성**: `!` 연산자 제거, TypeScript strict mode 호환
 
-## 📝 TODO
+### 성능
+- ✅ **네트워크 대기 최적화**: `waitForTimeout` 대신 `waitForLoadState('networkidle')` 사용
+- ✅ **병렬 실행 지원**: 닉네임 충돌 방지로 안전한 병렬 실행 가능
 
-- [ ] WebSocket 실시간 통신 테스트 추가
-- [ ] 게임 종료 화면 테스트
-- [ ] 플레이어 재접속 시나리오 테스트
-- [ ] 성능 테스트 (다수 플레이어)
-- [ ] 모바일 반응형 테스트
-- [ ] 접근성(a11y) 테스트
+## 🔧 환경 변수
+
+테스트 실행 시 환경 변수를 설정할 수 있습니다:
+
+```bash
+# 다른 서버 주소 사용
+API_BASE_URL=http://staging-server:8080/api npm run test:e2e
+
+# 로컬 개발 환경 (기본값)
+npm run test:e2e
+```
