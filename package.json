@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run generate-types:local && next dev --turbopack",
-    "build": "npm run generate-types:prod && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
