@@ -13,7 +13,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "generate-types": "openapi-typescript http://localhost:8080/api-docs -o src/types/api.ts",
+    "generate-types": "openapi-typescript ${API_URL}/api-docs -o src/types/api.ts",
     "prebuild": "npm run generate-types"
   },
   "dependencies": {
