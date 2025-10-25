@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
@@ -31,10 +31,10 @@ class ApiClient {
     );
   }
 
-  private async request<T>(
+  private async request<T, D = Record<string, never>>(
     method: 'get' | 'post' | 'put' | 'delete',
     endpoint: string,
-    data?: any,
+    data?: D,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     try {
@@ -69,20 +69,20 @@ class ApiClient {
     return this.request<T>('get', endpoint, undefined, config);
   }
 
-  async post<T>(
+  async post<T, D = Record<string, never>>(
     endpoint: string,
-    data?: any,
+    data?: D,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    return this.request<T>('post', endpoint, data, config);
+    return this.request<T, D>('post', endpoint, data, config);
   }
 
-  async put<T>(
+  async put<T, D = Record<string, never>>(
     endpoint: string,
-    data?: any,
+    data?: D,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    return this.request<T>('put', endpoint, data, config);
+    return this.request<T, D>('put', endpoint, data, config);
   }
 
   async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
