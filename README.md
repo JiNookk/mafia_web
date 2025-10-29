@@ -4,8 +4,8 @@
 
 ## 🔗 링크
 
-- **Live**: [https://mafia-online-web.vercel.app/entry](https://mafia-online-web.vercel.app/entry)
-- **Backend**: [https://github.com/JiNookk/mafia_server](https://github.com/JiNookk/mafia_server)
+- **서비스**: [https://mafia-online-web.vercel.app/entry](https://mafia-online-web.vercel.app/entry)
+- **서버**: [https://github.com/JiNookk/mafia_server](https://github.com/JiNookk/mafia_server)
 
 ## 🛠 기술 스택
 
