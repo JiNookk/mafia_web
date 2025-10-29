@@ -135,24 +135,6 @@ export default function LobbyPage() {
 
       {/* 방 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {/* 백도어 버튼 */}
-        <div
-          onClick={() => router.push('/game/test')}
-          className="card-mafia rounded-2xl p-4 border-2 border-secondary/50 hover:border-secondary active:scale-[0.98] transition-all cursor-pointer animate-fade-in"
-        >
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-semibold text-base text-secondary">🔓 테스트 게임 (백도어)</span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary/20 text-secondary border border-secondary/30">
-              개발자용
-            </span>
-          </div>
-          <div className="flex justify-between text-sm text-secondary/70">
-            <span>바로 게임 시작</span>
-            <span>테스트 모드</span>
-          </div>
-        </div>
-
-        {/* 일반 방 목록 */}
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             로딩 중...
